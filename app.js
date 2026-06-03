@@ -1,234 +1,302 @@
 'use strict';
 
 /* ═══════════════════════════════════════════
-   LIVE RATES — Bank of Israel fetch
-   Fallback values used if API unavailable
+   LIVE RATES — BoI fetch with fallback
 ═══════════════════════════════════════════ */
 const RATES = {
-  boi:        4.00,   // Bank of Israel interest rate %
-  prime:      5.50,   // Prime = BoI + 1.5
-  makam:      4.00,   // מק"מ ≈ BoI rate
-  govBond3:   4.00,   // 3Y govt bond
-  govBond10:  4.50,   // 10Y govt bond
-  inflation:  2.5,    // Annual CPI forecast
+  boi:      4.00,
+  prime:    5.50,   // boi + 1.5
+  makam:    4.00,   // ≈ boi
+  govBond3: 4.00,
+  govBond10:4.50,
 };
 
 async function fetchLiveRates() {
   try {
-    // Bank of Israel open data API — interest rate series
     const res = await fetch(
       'https://edge.boi.gov.il/FusionEdge/series/?format=json&lang=en&id=FM_PR_INT_DLY',
       { signal: AbortSignal.timeout(4000) }
     );
-    if (!res.ok) throw new Error('API error');
+    if (!res.ok) throw new Error();
     const data = await res.json();
-    const latest = data?.result?.records?.[0];
-    if (latest?.TIME_PERIOD && latest?.OBS_VALUE) {
-      const rate = parseFloat(latest.OBS_VALUE);
-      if (!isNaN(rate) && rate > 0) {
-        RATES.boi   = rate;
-        RATES.prime = rate + 1.5;
-        RATES.makam = rate;
-        updateRateDisplays();
-        return;
-      }
+    const val = parseFloat(data?.result?.records?.[0]?.OBS_VALUE);
+    if (!isNaN(val) && val > 0) {
+      RATES.boi   = val;
+      RATES.prime = val + 1.5;
+      RATES.makam = val;
     }
-    throw new Error('No valid data');
-  } catch {
-    // Silently use fallback values — already set
-    updateRateDisplays();
-  }
+  } catch { /* use fallback values */ }
+  updateAnchorDisplays();
 }
 
-function updateRateDisplays() {
-  const p = document.getElementById('primeRateDisplay');
-  const m = document.getElementById('makamRateDisplay');
-  if (p) p.textContent = `${RATES.prime.toFixed(2)}% (בנק ישראל ${RATES.boi}% + 1.5%)`;
-  if (m) m.textContent = `${RATES.makam.toFixed(2)}%`;
+function updateAnchorDisplays() {
+  setText('primeRateDisplay',  `${RATES.prime.toFixed(2)}%`);
+  setText('makamRateDisplay',  `${RATES.makam.toFixed(2)}%`);
+  setText('mczAnchorDisplay',  `${RATES.govBond3.toFixed(2)}%`);
+  setText('mlczAnchorDisplay', `${RATES.govBond3.toFixed(2)}%`);
+  // Update totals
+  updateSpreadTotal('prime',  STATE.tracks.prime.spread,  RATES.prime);
+  updateSpreadTotal('makam',  STATE.tracks.makam.spread,  RATES.makam);
+  updateSpreadTotal('mcz',    STATE.tracks.mcz.spread,    RATES.govBond3);
+  updateSpreadTotal('mlcz',   STATE.tracks.mlcz.spread,   RATES.govBond3);
   recalcAllTracks();
 }
 
 /* ═══════════════════════════════════════════
-   UTILITIES
+   UTILS
 ═══════════════════════════════════════════ */
 function fmt(n) {
-  if (isNaN(n) || n === null) return '—';
+  if (isNaN(n) || n == null || n <= 0) return '—';
   return '₪' + Math.round(n).toLocaleString('he-IL');
-}
-function fmtK(n) {
-  if (isNaN(n) || n === null) return '—';
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(2).replace(/\.?0+$/, '') + 'M';
-  if (n >= 1000)      return Math.round(n / 1000) + 'K';
-  return String(Math.round(n));
 }
 function parseNum(str) {
   return parseFloat(String(str).replace(/[₪,\s]/g, '')) || 0;
 }
 function formatInput(el) {
-  const val = parseNum(el.value);
-  if (val > 0) el.value = val.toLocaleString('he-IL');
+  const v = parseNum(el.value);
+  if (v > 0) el.value = v.toLocaleString('he-IL');
 }
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+/* Slider fill: always LTR internally, fill from left */
 function setSliderFill(slider) {
-  const min  = parseFloat(slider.min);
-  const max  = parseFloat(slider.max);
-  const val  = parseFloat(slider.value);
-  const pct  = ((val - min) / (max - min)) * 100;
-  slider.style.background = `linear-gradient(to right, #008B1E ${pct}%, #E2E2DC ${pct}%)`;
+  const min = parseFloat(slider.min);
+  const max = parseFloat(slider.max);
+  const val = parseFloat(slider.value);
+  const pct = ((val - min) / (max - min)) * 100;
+  slider.style.background =
+    `linear-gradient(to right, #008B1E ${pct}%, #E2E2DC ${pct}%)`;
 }
 
 /* ═══════════════════════════════════════════
    MORTGAGE MATH
 ═══════════════════════════════════════════ */
 
-/**
- * Spitzer (standard Israeli amortization) monthly payment
- * P = principal, r = annual rate %, n = years
- */
-function spitzerPayment(P, annualRate, years) {
+/** Standard Spitzer monthly payment */
+function spitzer(P, annualRate, years) {
   if (P <= 0 || annualRate <= 0 || years <= 0) return 0;
   const r = annualRate / 100 / 12;
   const n = years * 12;
-  return P * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  return P * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
 }
 
-function kerenShavaPayment(P, annualRate, years) {
+/** Keren Shava (equal principal) — initial (highest) payment */
+function kerenInitial(P, annualRate, years) {
   if (P <= 0 || years <= 0) return 0;
   const r = annualRate / 100 / 12;
   const n = years * 12;
-  const principalPmt = P / n;
-  return { initial: principalPmt + P * r, final: principalPmt };
+  return (P / n) + P * r;  // first payment is always the highest
+}
+function kerenFinal(P, annualRate, years) {
+  if (P <= 0 || years <= 0) return 0;
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  return (P / n) + (P / n) * r;  // last payment (lowest)
+}
+function kerenTotal(P, annualRate, years) {
+  if (P <= 0 || years <= 0) return 0;
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  return P + P * r * (n + 1) / 2;
 }
 
-function totalCostSpitzer(P, annualRate, years) {
-  const pmt = spitzerPayment(P, annualRate, years);
-  return pmt * years * 12;
+/** Balloon: interest-only during term, full principal at end */
+function balloonMonthly(P, annualRate) {
+  if (P <= 0 || annualRate <= 0) return 0;
+  return P * (annualRate / 100 / 12);
+}
+function balloonTotal(P, annualRate, years) {
+  return balloonMonthly(P, annualRate) * years * 12 + P;
+}
+
+/** Grace period: interest-only for graceMo months, then Spitzer for remainder */
+function gracePayments(P, annualRate, years, graceMo) {
+  const gracePmt = P * (annualRate / 100 / 12);
+  const remaining = Math.max(years * 12 - graceMo, 1);
+  const postPmt = spitzer(P, annualRate, remaining / 12);
+  return { grace: gracePmt, post: postPmt };
+}
+
+/** Total cost for Spitzer */
+function spitzerTotal(P, annualRate, years) {
+  return spitzer(P, annualRate, years) * years * 12;
 }
 
 /**
- * CPI-linked track: project forward using inflation
- * Returns initial and peak monthly payment
+ * CPI-linked track:
+ * Initial payment uses real rate. Principal grows with inflation.
+ * Peak = payment after inflationYears of CPI growth.
  */
-function cpiLinkedPayments(P, annualRate, years, annualCPI) {
-  const initial = spitzerPayment(P, annualRate + annualCPI, years);
-  // Worst case scenario: CPI stays constant, principal grows
-  const peakMultiplier = Math.pow(1 + annualCPI / 100, Math.min(years, 10));
-  const peak = spitzerPayment(P * peakMultiplier, annualRate + annualCPI, Math.max(years - 10, years));
-  return { initial, peak };
+function cpiPayments(P, nominalRate, years, annualCPI, inflationYears = 10) {
+  const realRate = nominalRate + annualCPI; // effective rate on linked principal
+  const initial  = spitzer(P, realRate, years);
+  // After inflationYears, principal has grown by CPI compounding
+  const grownP   = P * Math.pow(1 + annualCPI / 100, Math.min(inflationYears, years));
+  const peak     = spitzer(grownP, realRate, Math.max(years - inflationYears, 1));
+  const total    = spitzerTotal(P, realRate, years) * Math.pow(1 + annualCPI / 100, years * 0.5);
+  return { initial, peak, total };
 }
 
 /**
- * Variable rate tracks: initial + stress-test peak (+2% anchor shock)
+ * Variable rate:
+ * Initial payment at current rate, peak at current + 2%.
  */
 function variablePayments(P, currentRate, years) {
-  const initial = spitzerPayment(P, currentRate, years);
-  const peak    = spitzerPayment(P, currentRate + 2, years); // +2% stress
-  return { initial, peak };
+  const initial = spitzer(P, currentRate, years);
+  const peak    = spitzer(P, currentRate + 2, years);
+  const total   = spitzerTotal(P, currentRate, years);
+  return { initial, peak, total };
+}
+
+/* Compute track outputs based on state */
+function computeTrack(id, t, totalMortgage, annualCPI) {
+  const P = totalMortgage * (t.pct / 100);
+  if (P <= 0 || !t.enabled) return null;
+
+  const rate    = t.effectiveRate || t.rate || 5;
+  const years   = t.years || 20;
+  const graceMo = t.graceMo || 12;
+
+  let initial = 0, peak = 0, total = 0;
+
+  if (t.amort === 'keren') {
+    initial = kerenInitial(P, rate, years);
+    peak    = initial; // already highest
+    total   = kerenTotal(P, rate, years);
+  } else if (t.amort === 'balloon') {
+    initial = balloonMonthly(P, rate);
+    peak    = initial;
+    total   = balloonTotal(P, rate, years);
+  } else if (t.amort === 'grace') {
+    const g = gracePayments(P, rate, years, graceMo);
+    initial = g.grace;
+    peak    = g.post;
+    total   = g.grace * graceMo + g.post * (years * 12 - graceMo) + P * (t.cpi ? 0 : 0);
+  } else {
+    // spitzer
+    if (t.cpi) {
+      const c = cpiPayments(P, rate, years, annualCPI);
+      initial = c.initial; peak = c.peak; total = c.total;
+    } else if (!t.fixed) {
+      const v = variablePayments(P, rate, years);
+      initial = v.initial; peak = v.peak; total = v.total;
+    } else {
+      initial = spitzer(P, rate, years);
+      peak    = initial;
+      total   = spitzerTotal(P, rate, years);
+    }
+  }
+
+  return { P, initial, peak, total, interest: total - P };
 }
 
 /* ═══════════════════════════════════════════
    STATE
 ═══════════════════════════════════════════ */
 const STATE = {
-  // Step 1
-  purchaseType: 'discounted',
+  purchaseType: 'first',
   maxLTV: 75,
   propertyPrice: 2_000_000,
-  equityAmount: 500_000,
-  globalYears: 20,
-  marketValue: 1_800_000,
-  hasGrant: false,
-  grantAmount: 40_000,
-
-  // Step 2
-  totalMortgage: 1_000_000,
-  inflationRate: 2.5,
+  equityAmount:  500_000,
+  globalYears:   20,
+  marketValue:   1_800_000,
+  hasGrant:      false,
+  grantAmount:   40_000,
+  totalMortgage: 1_500_000,
+  inflationRate: 2.0,
 
   tracks: {
-    kalatz: { enabled: true,  pct: 40, rate: 4.90, years: 20, amort: 'spitzer', fixed: true  },
-    katz:   { enabled: false, pct: 0,  rate: 3.00, years: 20, amort: 'spitzer', fixed: true,  cpi: true },
-    prime:  { enabled: true,  pct: 60, spread: 0.75, years: 20, amort: 'spitzer', fixed: false },
-    makam:  { enabled: false, pct: 0,  spread: 1.30, years: 20, amort: 'spitzer', fixed: false },
-    var13cpi:  { enabled: false, pct: 0, spread: 1.30, years: 20, amort: 'spitzer', fixed: false, cpi: true  },
-    var13:     { enabled: false, pct: 0, spread: 1.30, years: 20, amort: 'spitzer', fixed: false, cpi: false },
-    var510cpi: { enabled: false, pct: 0, spread: 1.30, years: 20, amort: 'spitzer', fixed: false, cpi: true  },
-    var510:    { enabled: false, pct: 0, spread: 1.30, years: 20, amort: 'spitzer', fixed: false, cpi: false },
-    zakaut:    { enabled: false, pct: 0, rate: 3.50, years: 20, amort: 'spitzer', fixed: true, cpi: true },
+    kalatz: { enabled: true,  pct: 33, rate: 4.50, years: 20, amort: 'spitzer', fixed: true,  cpi: false },
+    katz:   { enabled: true,  pct: 0,  rate: 2.50, years: 20, amort: 'spitzer', fixed: true,  cpi: true  },
+    prime:  { enabled: true,  pct: 34, spread: 0.50, years: 20, amort: 'spitzer', fixed: false, cpi: false },
+    makam:  { enabled: true,  pct: 0,  spread: 1.30, years: 20, amort: 'spitzer', fixed: false, cpi: false },
+    mcz:    { enabled: true,  pct: 0,  spread: 1.30, years: 20, amort: 'spitzer', fixed: false, cpi: true,  interval: 5 },
+    mlcz:   { enabled: true,  pct: 0,  spread: 1.30, years: 20, amort: 'spitzer', fixed: false, cpi: false, interval: 5 },
+    zakaut: { enabled: true,  pct: 0,  rate: 3.50, years: 20, amort: 'spitzer', fixed: true,  cpi: true  },
   }
 };
 
 /* ═══════════════════════════════════════════
-   TRACK INFO TEXTS
+   TRACK INFO
 ═══════════════════════════════════════════ */
 const TRACK_INFO = {
-  kalatz:    { title: 'קבועה לא צמודה (קל"צ)', body: 'ריבית קבועה לכל אורך חיי ההלוואה ללא הצמדה למדד. ההחזר החודשי קבוע ויציב. מסלול הביטחון המרכזי בתמהיל. הריבית ההתחלתית גבוהה יותר אך ללא הפתעות.' },
-  katz:      { title: 'קבועה צמודת מדד (ק"צ)', body: 'ריבית קבועה, אך יתרת הקרן צמודה למדד המחירים לצרכן. ריבית התחלתית נמוכה יותר מקל"צ, אך הקרן גדלה עם האינפלציה.' },
-  prime:     { title: 'מסלול פריים', body: 'ריבית בנק ישראל + 1.5% (פריים) ± תוספת/הנחה. מסלול גמיש לפירעון מוקדם ללא עמלה. ריבית עלולה לעלות עם החלטות בנק ישראל.' },
-  makam:     { title: 'מק"מ — משתנה שנתי', body: 'הריבית מתעדכנת מדי שנה לפי תשואת המק"מ של בנק ישראל. מסלול קצר תחנות — חשוף לשינויים שנתיים בריבית.' },
-  var13cpi:  { title: 'משתנה צמודה 1–3 שנים', body: 'ריבית מתעדכנת כל 1–3 שנים בהתאם לאג"ח ממשלתי, עם הצמדה למדד על הקרן. כפל חשיפה: ריבית + מדד.' },
-  var13:     { title: 'משתנה לא צמודה 1–3 שנים', body: 'ריבית מתעדכנת כל 1–3 שנים, ללא הצמדה למדד. פחות יציב מקל"צ אך ריבית התחלתית נמוכה יותר.' },
-  var510cpi: { title: 'משתנה צמודה 5–10 שנים', body: 'ריבית מתעדכנת כל 5–10 שנים, עם הצמדה למדד. יציבות בינונית — תחנת ריבית ארוכה יחסית.' },
-  var510:    { title: 'משתנה לא צמודה 5–10 שנים', body: 'ריבית מתעדכנת כל 5–10 שנים, ללא הצמדה. איזון בין יציבות לגמישות.' },
-  zakaut:    { title: 'הלוואת זכאות', body: 'הלוואה מטעם המדינה בריבית קבועה וצמודה למדד. זמינה לזכאים לפי תבחיני המדינה (מצב משפחתי, שירות צבאי, ותק). הלוואת זכאות משפרת את תנאי שאר המסלולים בתמהיל.' },
+  kalatz: { title: 'קבועה לא צמודה (קל"צ)', body: 'ריבית קבועה לכל אורך חיי ההלוואה, ללא הצמדה למדד. ההחזר החודשי קבוע ויציב לחלוטין. מסלול הביטחון המרכזי — הריבית ההתחלתית גבוהה יותר אך ללא הפתעות.' },
+  katz:   { title: 'קבועה צמודת מדד (ק"צ)', body: 'ריבית קבועה, אך יתרת הקרן צמודה למדד המחירים לצרכן. ריבית נמינלית נמוכה מקל"צ, אך ההחזר האמיתי גדל עם האינפלציה. מתאים לתקופות אינפלציה נמוכה.' },
+  prime:  { title: 'מסלול פריים', body: 'ריבית = ריבית בנק ישראל + 1.5% (ריבית פריים) ± תוספת/הנחה. גמיש לפירעון מוקדם ללא עמלה. ריבית עשויה לעלות עם החלטות בנק ישראל — שמרו 1/3 לפחות בריבית קבועה.' },
+  makam:  { title: 'מק"מ — משתנה שנתי', body: 'הריבית מתעדכנת מדי שנה לפי תשואת מלווה קצר מועד (מק"מ) של בנק ישראל. מסלול בעל תחנת ריבית קצרה — חשוף לשינויים שנתיים.' },
+  mcz:    { title: 'משתנה צמודת מדד (מ"צ)', body: 'ריבית מתעדכנת בכל תחנה (1–10 שנים) בהתאם לאג"ח ממשלתי, עם הצמדה למדד על הקרן. חשיפה כפולה: שינוי ריבית + אינפלציה. מתאים לתקופות קצרות.' },
+  mlcz:   { title: 'משתנה לא צמודה (מל"צ)', body: 'ריבית מתעדכנת בכל תחנה ללא הצמדה. פחות יציב מקל"צ אך ריבית התחלתית נמוכה יותר. טוב לתמהיל עם קל"צ כבסיס.' },
+  zakaut: { title: 'הלוואת זכאות', body: 'הלוואה מטעם המדינה בריבית קבועה צמודה למדד. הריבית נמוכה ממשכנתא רגילה ומשפרת את תנאי שאר המסלולים מול הבנק. הזינו את הריבית שקיבלתם ממשרד הבינוי והשיכון.' },
 };
 
-const TRACK_COLORS = ['#008B1E','#AEE27B','#D3A742','#5b21b6','#9d174d','#1e40af','#92400e','#065f46','#0f766e'];
+const TRACK_COLORS = ['#008B1E','#AEE27B','#D3A742','#5b21b6','#9d174d','#1e40af','#0f766e'];
+const TRACK_LABELS = {
+  kalatz:'קל"צ', katz:'ק"צ', prime:'פריים',
+  makam:'מק"מ', mcz:'מ"צ', mlcz:'מל"צ', zakaut:'זכאות'
+};
 
 /* ═══════════════════════════════════════════
-   STEP 1 LOGIC
+   STEP 1
 ═══════════════════════════════════════════ */
 function updateStep1() {
-  const { purchaseType, maxLTV, propertyPrice, equityAmount } = STATE;
+  const { purchaseType, maxLTV, propertyPrice, equityAmount, marketValue, hasGrant, grantAmount } = STATE;
 
-  const mortgage = propertyPrice - equityAmount;
-  const equityPct = propertyPrice > 0 ? (equityAmount / propertyPrice * 100) : 0;
-  const ltvPct    = 100 - equityPct;
-  const minEquityPct = 100 - maxLTV;
-
-  // LTV bar
-  const fill = document.getElementById('ltvFill');
-  if (fill) fill.style.width = Math.min(equityPct, 100) + '%';
-
-  const epEl = document.getElementById('equityPct');
-  const lpEl = document.getElementById('ltvPct');
-  if (epEl) epEl.textContent = equityPct.toFixed(0) + '%';
-  if (lpEl) lpEl.textContent = ltvPct.toFixed(0) + '%';
-
-  // Validate LTV
-  const warning = document.getElementById('ltvWarning');
-  let valid = true;
+  let ltvBase = propertyPrice;
+  let minEquity = propertyPrice * (100 - maxLTV) / 100;
 
   if (purchaseType === 'discounted') {
-    // Validate against market value cap
-    const mv = STATE.marketValue;
-    const minEq = STATE.hasGrant ? 60_000 : 100_000;
-    if (equityAmount < minEq) {
-      warning.textContent = `⚠️ הון עצמי מינימלי ${minEq.toLocaleString('he-IL')} ₪`;
-      warning.classList.remove('hidden');
-      valid = false;
-    } else if (mv > 2_100_000) {
-      warning.textContent = `⚠️ שווי שוק חורג מהתקרה של 2,100,000 ₪`;
-      warning.classList.remove('hidden');
-      valid = false;
-    } else {
-      warning.classList.add('hidden');
-    }
-  } else {
-    if (ltvPct > maxLTV) {
-      warning.textContent = `⚠️ אחוז המימון (${ltvPct.toFixed(0)}%) חורג מהמותר (${maxLTV}%). יש להגדיל הון עצמי ל-${Math.ceil(propertyPrice * minEquityPct / 100).toLocaleString('he-IL')} ₪`;
-      warning.classList.remove('hidden');
-      valid = false;
-    } else {
-      warning.classList.add('hidden');
+    const cap = 2_100_000;
+    const effectiveMV = Math.min(marketValue, cap);
+    ltvBase   = effectiveMV;
+    minEquity = hasGrant ? 60_000 : 100_000;
+    const capNote = document.getElementById('marketValueCapNote');
+    if (capNote) {
+      if (marketValue > cap) {
+        capNote.textContent = `⚠️ שווי שוק חורג מהתקרה — מחושב לפי 2,100,000 ₪`;
+      } else {
+        capNote.textContent = '';
+      }
     }
   }
 
-  // Result
+  const ltvPct    = ltvBase > 0 ? ((ltvBase - equityAmount) / ltvBase * 100) : 0;
+  const equityPct = 100 - ltvPct;
+
+  // LTV bar fill (equity %)
+  const fill = document.getElementById('ltvFill');
+  if (fill) fill.style.width = Math.max(0, Math.min(equityPct, 100)) + '%';
+  setText('equityPct', equityPct.toFixed(0) + '%');
+  setText('ltvPct',    Math.max(0, ltvPct).toFixed(0) + '%');
+
+  // Validate
+  const warning = document.getElementById('ltvWarning');
+  let valid = true;
+  if (equityAmount < minEquity) {
+    warning.textContent = `⚠️ הון עצמי מינימלי: ${Math.round(minEquity).toLocaleString('he-IL')} ₪`;
+    warning.classList.remove('hidden'); valid = false;
+  } else if (purchaseType !== 'discounted' && ltvPct > maxLTV) {
+    const needed = Math.ceil(propertyPrice * (100 - maxLTV) / 100);
+    warning.textContent = `⚠️ מימון (${ltvPct.toFixed(0)}%) חורג מהמותר (${maxLTV}%). הגדילו הון עצמי ל-${needed.toLocaleString('he-IL')} ₪`;
+    warning.classList.remove('hidden'); valid = false;
+  } else {
+    warning.classList.add('hidden');
+  }
+
+  // Mortgage amount
+  const mortgage = purchaseType === 'discounted'
+    ? Math.min(marketValue, 2_100_000) * (maxLTV / 100)
+    : propertyPrice - equityAmount;
+
   const amountEl = document.getElementById('mortgageAmount');
   const subEl    = document.getElementById('resultSub');
   if (valid && mortgage > 0) {
     if (amountEl) amountEl.textContent = fmt(mortgage);
-    if (subEl)   subEl.textContent = `${ltvPct.toFixed(0)}% מימון בנקאי מתוך ${fmt(propertyPrice)}`;
-    // Auto-populate step2 total mortgage
+    if (subEl)   subEl.textContent = purchaseType === 'discounted'
+      ? `${maxLTV}% מימון מתוך שווי שוק ${fmt(Math.min(marketValue, 2_100_000))}`
+      : `${(ltvPct).toFixed(0)}% מימון בנקאי מתוך ${fmt(propertyPrice)}`;
     STATE.totalMortgage = Math.max(0, mortgage);
     syncTotalMortgageField();
   } else {
@@ -240,7 +308,7 @@ function updateStep1() {
 function syncTotalMortgageField() {
   const el     = document.getElementById('totalMortgage');
   const slider = document.getElementById('totalMortgageSlider');
-  if (el)     el.value = STATE.totalMortgage.toLocaleString('he-IL');
+  if (el)     el.value = Math.round(STATE.totalMortgage).toLocaleString('he-IL');
   if (slider) {
     slider.value = Math.min(STATE.totalMortgage, parseFloat(slider.max));
     setSliderFill(slider);
@@ -249,365 +317,279 @@ function syncTotalMortgageField() {
 }
 
 /* ═══════════════════════════════════════════
-   STEP 2 TRACK CALCULATIONS
+   STEP 2 — RECALC
 ═══════════════════════════════════════════ */
-function getTrackRate(id) {
-  const t = STATE.tracks[id];
-  switch (id) {
-    case 'prime':     return RATES.prime + t.spread;
-    case 'makam':     return RATES.makam + t.spread;
-    case 'var13cpi':  return RATES.govBond3 + t.spread;
-    case 'var13':     return RATES.govBond3 + t.spread;
-    case 'var510cpi': return RATES.govBond10 + t.spread;
-    case 'var510':    return RATES.govBond10 + t.spread;
-    default:          return t.rate;
-  }
+function updateSpreadTotal(id, spread, anchor) {
+  const total = anchor + spread;
+  const spreadId = id === 'prime' ? 'primeSpread' : `${id}Spread`;
+  const totalDisplayId = id === 'prime' ? 'primeTotalDisplay'
+    : id === 'makam' ? 'makamTotalDisplay'
+    : id === 'mcz'   ? 'mczTotalDisplay'
+    : 'mlczTotalDisplay';
+  const spreadDisplayId = id === 'prime' ? 'primeSpreadDisplay'
+    : id === 'makam' ? 'makamSpreadDisplay'
+    : id === 'mcz'   ? 'mczSpreadDisplay'
+    : 'mlczSpreadDisplay';
+
+  const sign = spread >= 0 ? '+' : '';
+  setText(spreadId, `${sign}${spread.toFixed(2)}%`);
+  setText(spreadDisplayId, `${sign}${spread.toFixed(2)}%`);
+  setText(totalDisplayId, `${total.toFixed(2)}%`);
+  STATE.tracks[id].effectiveRate = total;
 }
 
 function recalcAllTracks() {
   const totalM = STATE.totalMortgage;
+  const cpi    = STATE.inflationRate;
+
   let totalMonthly  = 0;
+  let totalPeak     = 0;
   let totalInterest = 0;
   let grandTotal    = 0;
   let fixedPct      = 0;
   let activePct     = 0;
   let activeCount   = 0;
   const breakdowns  = [];
+  const colors      = Object.keys(STATE.tracks);
 
-  Object.entries(STATE.tracks).forEach(([id, t]) => {
+  Object.entries(STATE.tracks).forEach(([id, t], i) => {
     if (!t.enabled) return;
+    const res = computeTrack(id, t, totalM, cpi);
+    if (!res || res.P <= 0) return;
 
-    const principal = totalM * (t.pct / 100);
-    if (principal <= 0) return;
-
-    const rate    = getTrackRate(id);
-    const years   = t.years;
-    const cpi     = STATE.inflationRate;
-    let monthly, peak, total, interest;
-
-    if (t.amort === 'spitzer') {
-      if (t.cpi) {
-        const { initial, peak: pk } = cpiLinkedPayments(principal, rate, years, cpi);
-        monthly = initial;
-        peak    = pk;
-        total   = monthly * years * 12 * (1 + cpi / 100 * years * 0.5); // approximation
-      } else if (!t.fixed) {
-        const { initial, peak: pk } = variablePayments(principal, rate, years);
-        monthly = initial;
-        peak    = pk;
-        total   = totalCostSpitzer(principal, rate, years);
-      } else {
-        monthly = spitzerPayment(principal, rate, years);
-        peak    = monthly;
-        total   = totalCostSpitzer(principal, rate, years);
-      }
-      interest = total - principal;
-    } else if (t.amort === 'keren') {
-      const { initial } = kerenShavaPayment(principal, rate, years);
-      monthly = initial;
-      peak    = initial;
-      total   = principal + (principal * (rate / 100 / 12) * years * 12 / 2);
-      interest = total - principal;
-    } else {
-      // balloon / grace — show approximate
-      monthly = spitzerPayment(principal, rate, years);
-      peak    = monthly;
-      total   = totalCostSpitzer(principal, rate, years);
-      interest = total - principal;
-    }
-
-    activePct    += t.pct;
-    activeCount  += 1;
-    totalMonthly += monthly;
-    totalInterest += interest;
-    grandTotal    += total;
+    activeCount++;
+    activePct     += t.pct;
+    totalMonthly  += res.initial;
+    totalPeak     += res.peak;
+    totalInterest += res.interest;
+    grandTotal    += res.total;
     if (t.fixed) fixedPct += t.pct;
 
-    // Update per-track display
-    updateTrackDisplay(id, { monthly, peak, total, interest, principal, rate });
-    breakdowns.push({ id, monthly, peak, total, interest, principal, rate, pct: t.pct });
+    // Per-track display
+    const pfx = id;
+    setText(`${pfx}Monthly`, fmt(res.initial));
+    setText(`${pfx}Peak`,    fmt(res.peak));
+    setText(`${pfx}Total`,   fmt(res.total));
+
+    breakdowns.push({ id, pct: t.pct, initial: res.initial, peak: res.peak, total: res.total, color: TRACK_COLORS[i % TRACK_COLORS.length] });
   });
 
   // Fixed rule
-  const fixedPctEl   = document.getElementById('fixedPct');
-  const fixedCheckEl = document.getElementById('fixedCheck');
-  const fixedRuleEl  = document.querySelector('.fixed-track-rule');
-  if (fixedPctEl) fixedPctEl.textContent = Math.round(fixedPct) + '%';
   const fixedOk = fixedPct >= 33.3;
-  if (fixedCheckEl) fixedCheckEl.textContent = fixedOk ? '✅' : '❌';
-  if (fixedRuleEl)  fixedRuleEl.classList.toggle('ok', fixedOk);
+  setText('fixedPct', Math.round(fixedPct) + '%');
+  setText('fixedCheck', fixedOk ? '✅' : '❌');
+  document.getElementById('fixedTrackRule')?.classList.toggle('ok', fixedOk);
 
-  // Total pct bar
+  // Total pct
   const pctBar = document.getElementById('totalPctBar');
-  const pctVal = document.getElementById('totalPctValue');
-  if (pctVal) pctVal.textContent = Math.round(activePct) + '%';
-  if (pctBar) {
+  const pctMsg = document.getElementById('totalPctMsg');
+  if (pctMsg) {
     const ok = Math.abs(activePct - 100) < 1;
-    pctBar.classList.toggle('ok', ok);
-    pctBar.querySelector('span').textContent = ok
-      ? `✅ סכום האחוזים הפעילים: 100% — מעולה!`
-      : `⚠️ סכום האחוזים הפעילים הוא ${Math.round(activePct)}% — נא לוודא שמגיעים ל-100%`;
+    if (pctBar) pctBar.classList.toggle('ok', ok);
+    pctMsg.innerHTML = ok
+      ? `✅ סכום האחוזים: <strong>100%</strong> — מעולה!`
+      : `⚠️ סכום האחוזים הפעילים: <strong>${Math.round(activePct)}%</strong> — נא לוודא שמגיעים ל-100%`;
   }
 
-  // Main result
-  const tmEl = document.getElementById('totalMonthly');
-  const atEl = document.getElementById('activeTracks');
-  const ticEl = document.getElementById('totalInterestCost');
-  const gtEl  = document.getElementById('grandTotal');
-  if (tmEl)  tmEl.textContent  = activeCount ? fmt(totalMonthly) : '—';
-  if (atEl)  atEl.textContent  = `${activeCount} מסלולים פעילים`;
-  if (ticEl) ticEl.textContent = activeCount ? fmt(totalInterest) : '—';
-  if (gtEl)  gtEl.textContent  = activeCount ? fmt(grandTotal) : '—';
+  // Results
+  setText('totalMonthly',     activeCount ? fmt(totalMonthly)  : '—');
+  setText('totalPeak',        activeCount ? fmt(totalPeak)     : '—');
+  setText('totalInterestCost',activeCount ? fmt(totalInterest) : '—');
+  setText('grandTotal',       activeCount ? fmt(grandTotal)    : '—');
+  setText('activeTracks',     `${activeCount} מסלולים פעילים`);
 
-  // Breakdown list
-  renderBreakdown(breakdowns, activePct);
+  renderBreakdown(breakdowns);
 }
 
-function updateTrackDisplay(id, { monthly, peak, total, interest, principal, rate }) {
-  const set = (elId, val) => {
-    const el = document.getElementById(elId);
-    if (el) el.textContent = val;
-  };
-  switch (id) {
-    case 'kalatz':
-      set('kalatzMonthly', fmt(monthly));
-      set('kalatzTotal',   fmt(total));
-      break;
-    case 'katz':
-      set('katzMonthly',   fmt(monthly));
-      set('katzPeak',      fmt(peak));
-      set('katzTotal',     fmt(total));
-      break;
-    case 'prime':
-      set('primeMonthly',  fmt(monthly));
-      set('primeTotal',    fmt(total));
-      break;
-    case 'makam':
-      set('makamMonthly',  fmt(monthly));
-      set('makamTotal',    fmt(total));
-      break;
-    case 'var13cpi':
-      set('var13cpiMonthly',    fmt(monthly));
-      set('var13cpiPeak',       fmt(peak));
-      set('var13cpiTotalCost',  fmt(total));
-      break;
-    case 'var13':
-      set('var13Monthly',    fmt(monthly));
-      set('var13TotalCost',  fmt(total));
-      break;
-    case 'var510cpi':
-      set('var510cpiMonthly',   fmt(monthly));
-      set('var510cpiPeak',      fmt(peak));
-      set('var510cpiTotalCost', fmt(total));
-      break;
-    case 'var510':
-      set('var510Monthly',   fmt(monthly));
-      set('var510TotalCost', fmt(total));
-      break;
-    case 'zakaut':
-      set('zakautMonthly', fmt(monthly));
-      set('zakautTotal',   fmt(total));
-      break;
-  }
-}
-
-function renderBreakdown(items, totalPct) {
+function renderBreakdown(items) {
   const list = document.getElementById('breakdownList');
   const bar  = document.getElementById('mixBar');
   if (!list || !bar) return;
+  list.innerHTML = ''; bar.innerHTML = '';
 
-  list.innerHTML = '';
-  bar.innerHTML  = '';
-
-  items.forEach((item, i) => {
-    const info  = TRACK_INFO[item.id] || {};
-    const color = TRACK_COLORS[i % TRACK_COLORS.length];
-    const rateDisplay = getTrackRate(item.id).toFixed(2);
-    const has峰 = item.peak && item.peak > item.monthly * 1.01;
-
+  items.forEach(item => {
+    const hasPeak = item.peak > item.initial * 1.005;
     const div = document.createElement('div');
     div.className = 'breakdown-item';
     div.innerHTML = `
       <div class="breakdown-item-name">
-        <span class="track-dot" style="background:${color}"></span>
+        <span class="track-dot" style="background:${item.color}"></span>
         <div>
-          <div class="breakdown-name">${info.title || item.id}</div>
-          <div class="breakdown-detail">${Math.round(item.pct)}% | ריבית ${rateDisplay}% | ${STATE.tracks[item.id].years} שנים</div>
+          <div class="breakdown-name">${TRACK_LABELS[item.id] || item.id}</div>
+          <div class="breakdown-detail">${Math.round(item.pct)}% מהתמהיל</div>
         </div>
       </div>
       <div class="breakdown-figures">
-        <span class="breakdown-monthly">${fmt(item.monthly)}/חודש${has峰 ? `<br><small style="color:#AEE27B">שיא: ${fmt(item.peak)}</small>` : ''}</span>
+        <span class="breakdown-monthly">${fmt(item.initial)}/חודש</span>
+        ${hasPeak ? `<span class="breakdown-peak">שיא: ${fmt(item.peak)}</span>` : ''}
         <span class="breakdown-total">סך: ${fmt(item.total)}</span>
-      </div>
-    `;
+      </div>`;
     list.appendChild(div);
 
-    // Mix bar segment
     const seg = document.createElement('div');
-    seg.style.cssText = `flex:${item.pct};background:${color};`;
+    seg.style.cssText = `flex:${item.pct};background:${item.color};`;
     bar.appendChild(seg);
   });
 }
 
 /* ═══════════════════════════════════════════
-   INIT & EVENT BINDING
+   BIND HELPERS
+═══════════════════════════════════════════ */
+function bindNumSlider(inputId, sliderId, onChange) {
+  const inp = document.getElementById(inputId);
+  const sld = document.getElementById(sliderId);
+  if (inp) {
+    inp.addEventListener('input', () => {
+      const v = parseNum(inp.value);
+      if (sld) { sld.value = Math.min(v, parseFloat(sld.max)); setSliderFill(sld); }
+      onChange(v);
+    });
+    inp.addEventListener('blur', () => formatInput(inp));
+  }
+  if (sld) {
+    sld.addEventListener('input', () => {
+      const v = parseFloat(sld.value);
+      if (inp) inp.value = Math.round(v).toLocaleString('he-IL');
+      setSliderFill(sld);
+      onChange(v);
+    });
+    setSliderFill(sld);
+  }
+}
+
+function syncEquity(val) {
+  const el  = document.getElementById('equityAmount');
+  const sld = document.getElementById('equitySlider');
+  STATE.equityAmount = val;
+  if (el)  el.value  = Math.round(val).toLocaleString('he-IL');
+  if (sld) { sld.value = Math.min(val, parseFloat(sld.max)); setSliderFill(sld); }
+}
+
+/* ═══════════════════════════════════════════
+   INIT
 ═══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Fetch live rates
   fetchLiveRates();
 
-  // ── TABS ──────────────────────────────────
+  /* ── TABS ── */
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       const step = tab.dataset.step;
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
-      document.querySelectorAll('.page').forEach(p => {
-        p.classList.toggle('active', p.id === `step${step}`);
-      });
+      document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === `step${step}`));
       if (step === '2') recalcAllTracks();
     });
   });
 
-  // ── PURCHASE TYPES ─────────────────────────
+  /* ── PURCHASE TYPES ── */
   document.querySelectorAll('.purchase-card').forEach(card => {
     card.addEventListener('click', () => {
       document.querySelectorAll('.purchase-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
       STATE.purchaseType = card.dataset.type;
       STATE.maxLTV = parseInt(card.dataset.ltv);
-
       const df = document.getElementById('discountedFields');
-      if (STATE.purchaseType === 'discounted') {
-        df.classList.add('visible');
-      } else {
-        df.classList.remove('visible');
-      }
+      if (df) df.classList.toggle('visible', STATE.purchaseType === 'discounted');
       updateStep1();
     });
   });
 
-  // Show discounted fields by default (since it's the default selection)
-  document.getElementById('discountedFields').classList.add('visible');
-
-  // ── GRANT TOGGLE ───────────────────────────
+  /* ── GRANT TOGGLE ── */
   const hasGrant = document.getElementById('hasGrant');
   if (hasGrant) {
     hasGrant.addEventListener('change', () => {
       STATE.hasGrant = hasGrant.checked;
-      document.getElementById('grantFields').classList.toggle('hidden', !hasGrant.checked);
-      document.getElementById('noGrantNote').classList.toggle('hidden', hasGrant.checked);
+      document.getElementById('grantFields')?.classList.toggle('hidden', !hasGrant.checked);
+      document.getElementById('noGrantNote')?.classList.toggle('hidden',  hasGrant.checked);
       updateStep1();
     });
   }
-
-  const grantInput = document.getElementById('grantAmount');
-  if (grantInput) {
-    grantInput.addEventListener('input', () => {
-      STATE.grantAmount = parseNum(grantInput.value);
-      updateStep1();
-    });
-    grantInput.addEventListener('blur', () => formatInput(grantInput));
-  }
-
-  // ── MARKET VALUE ───────────────────────────
-  bindInputSlider('marketValue', 'marketValueSlider', val => {
-    STATE.marketValue = val;
+  document.getElementById('grantAmount')?.addEventListener('input', e => {
+    STATE.grantAmount = parseNum(e.target.value);
     updateStep1();
   });
+  document.getElementById('grantAmount')?.addEventListener('blur', e => formatInput(e.target));
 
-  // ── PROPERTY & EQUITY ──────────────────────
-  let swapMode = false; // false = property is primary, true = equity is primary
+  /* ── MARKET VALUE ── */
+  bindNumSlider('marketValue', 'marketValueSlider', v => { STATE.marketValue = v; updateStep1(); });
 
-  bindInputSlider('propertyPrice', 'propertySlider', val => {
-    STATE.propertyPrice = val;
-    if (!swapMode) {
-      // Auto-calc equity from LTV rule
-      const minEq = STATE.propertyPrice * (100 - STATE.maxLTV) / 100;
-      if (STATE.equityAmount < minEq) {
-        STATE.equityAmount = Math.ceil(minEq);
-        syncEquityField();
-      }
-    } else {
-      // Equity is primary; recalc property from equity
-      // (do nothing — user drives equity)
-    }
+  /* ── PROPERTY & EQUITY ── */
+  bindNumSlider('propertyPrice', 'propertySlider', v => {
+    STATE.propertyPrice = v;
+    // Auto-clamp equity to respect minLTV
+    const minEq = v * (100 - STATE.maxLTV) / 100;
+    if (STATE.equityAmount < minEq) syncEquity(Math.ceil(minEq));
     updateStep1();
   });
-
-  bindInputSlider('equityAmount', 'equitySlider', val => {
-    STATE.equityAmount = val;
-    updateStep1();
-  });
-
+  bindNumSlider('equityAmount', 'equitySlider', v => { STATE.equityAmount = v; updateStep1(); });
   document.getElementById('swapBtn')?.addEventListener('click', () => {
-    swapMode = !swapMode;
+    // toggle: if equity is set, compute property and vice versa — simple swap of values
+    const tmp = STATE.propertyPrice;
+    // Not a real swap — just highlight which one leads
     const btn = document.getElementById('swapBtn');
-    if (btn) btn.title = swapMode ? 'הון עצמי ראשי — מחיר מחושב' : 'מחיר ראשי — הון מחושב';
+    if (btn) btn.style.transform = btn.style.transform === 'rotate(180deg)' ? '' : 'rotate(180deg)';
   });
 
-  // ── YEARS (Step 1) ─────────────────────────
-  document.querySelectorAll('.year-btn').forEach(btn => {
+  /* ── YEARS (Step 1) ── */
+  document.querySelectorAll('#step1 .year-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#step1 .year-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       STATE.globalYears = parseInt(btn.dataset.years);
+      const manual = document.getElementById('yearsManual');
+      if (manual) manual.value = STATE.globalYears;
     });
   });
+  const yearsManual = document.getElementById('yearsManual');
+  if (yearsManual) {
+    yearsManual.addEventListener('input', () => {
+      const v = Math.min(30, Math.max(1, parseInt(yearsManual.value) || 20));
+      STATE.globalYears = v;
+      document.querySelectorAll('#step1 .year-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.years) === v);
+      });
+    });
+  }
 
-  // ── GO TO STEP 2 ───────────────────────────
+  /* ── GO TO STEP 2 ── */
   document.getElementById('goToStep2Btn')?.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === 1));
-    document.querySelectorAll('.page').forEach(p => {
-      p.classList.toggle('active', p.id === 'step2');
-    });
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'step2'));
     recalcAllTracks();
   });
 
-  // ── TOTAL MORTGAGE (Step 2) ────────────────
-  bindInputSlider('totalMortgage', 'totalMortgageSlider', val => {
-    STATE.totalMortgage = val;
-    recalcAllTracks();
+  /* ── TOTAL MORTGAGE (Step 2) ── */
+  bindNumSlider('totalMortgage', 'totalMortgageSlider', v => {
+    STATE.totalMortgage = v; recalcAllTracks();
   });
 
-  // ── INFLATION ──────────────────────────────
+  /* ── INFLATION ── */
   document.getElementById('inflPlus')?.addEventListener('click', () => {
     STATE.inflationRate = Math.min(10, +(STATE.inflationRate + 0.5).toFixed(1));
-    document.getElementById('inflationRate').textContent = STATE.inflationRate + '%';
+    setText('inflationRate', STATE.inflationRate + '%');
     recalcAllTracks();
   });
   document.getElementById('inflMinus')?.addEventListener('click', () => {
     STATE.inflationRate = Math.max(0, +(STATE.inflationRate - 0.5).toFixed(1));
-    document.getElementById('inflationRate').textContent = STATE.inflationRate + '%';
+    setText('inflationRate', STATE.inflationRate + '%');
     recalcAllTracks();
   });
 
-  // ── SHOW ALL TRACKS TOGGLE ─────────────────
-  document.getElementById('showAllTracks')?.addEventListener('change', e => {
-    document.querySelectorAll('.track-card.extra-track').forEach(tc => {
-      tc.classList.toggle('show', e.target.checked);
-    });
-  });
-
-  // ── TRACK CARDS ────────────────────────────
+  /* ── TRACK CARDS ── */
   document.querySelectorAll('.track-card').forEach(card => {
-    const id     = card.dataset.track;
-    const t      = STATE.tracks[id];
+    const id = card.dataset.track;
+    const t  = STATE.tracks[id];
     if (!t) return;
 
-    // Enable/disable
-    const enableCb = card.querySelector('.track-enable');
-    if (enableCb) {
-      enableCb.addEventListener('change', () => {
-        t.enabled = enableCb.checked;
+    // Enable checkbox
+    const cb = card.querySelector('.track-enable');
+    if (cb) {
+      cb.addEventListener('change', () => {
+        t.enabled = cb.checked;
         card.classList.toggle('enabled', t.enabled);
         recalcAllTracks();
       });
-      // Init
-      if (t.enabled) {
-        enableCb.checked = true;
-        card.classList.add('enabled');
-      }
     }
 
     // Pct slider
@@ -623,11 +605,11 @@ document.addEventListener('DOMContentLoaded', () => {
       setSliderFill(pctSlider);
     }
 
-    // Rate slider (fixed tracks)
-    const rateSlider = card.querySelector('.rate-slider');
-    if (rateSlider && !['prime','makam','var13cpi','var13','var510cpi','var510'].includes(id)) {
-      const rateEl = document.getElementById(`${id}Rate`);
-      if (rateEl) {
+    // Rate slider (fixed tracks: kalatz, katz, zakaut)
+    if (['kalatz', 'katz', 'zakaut'].includes(id)) {
+      const rateSlider = card.querySelector('.rate-slider');
+      const rateEl     = document.getElementById(`${id}Rate`);
+      if (rateSlider && rateEl) {
         rateSlider.addEventListener('input', () => {
           t.rate = parseInt(rateSlider.value) / 100;
           rateEl.textContent = t.rate.toFixed(2) + '%';
@@ -638,135 +620,122 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Spread slider (variable tracks)
-    if (['prime','makam','var13cpi','var13','var510cpi','var510'].includes(id)) {
-      const spreadSlider = card.querySelector(`[id$="SpreadSlider"]`);
-      const spreadEl     = document.getElementById(`${id}Spread`);
-      const totalEl      = document.getElementById(`${id}TotalRate`) || document.getElementById(`${id}Total`);
+    // Spread sliders (variable tracks)
+    if (['prime', 'makam', 'mcz', 'mlcz'].includes(id)) {
+      const spreadSlider = document.getElementById(`${id}SpreadSlider`);
       if (spreadSlider) {
+        const anchor = id === 'prime' ? RATES.prime
+          : id === 'makam' ? RATES.makam
+          : RATES.govBond3;
         spreadSlider.addEventListener('input', () => {
-          const spread = parseInt(spreadSlider.value) / 100;
-          t.spread = spread;
-          if (spreadEl) {
-            const sign = spread < 0 ? '' : '+';
-            const sEl  = card.querySelector('.spread-sign');
-            if (sEl) sEl.textContent = spread < 0 ? '' : '+';
-            spreadEl.textContent = (spread < 0 ? '' : '') + Math.abs(spread).toFixed(2) + '%';
-          }
-          const totalRate = getTrackRate(id);
-          if (totalEl) totalEl.textContent = totalRate.toFixed(2) + '%';
+          t.spread = parseInt(spreadSlider.value) / 100;
+          const currentAnchor = id === 'prime' ? RATES.prime
+            : id === 'makam' ? RATES.makam
+            : RATES.govBond3;
+          updateSpreadTotal(id, t.spread, currentAnchor);
           setSliderFill(spreadSlider);
           recalcAllTracks();
         });
-        // Init display
-        const totalRate = getTrackRate(id);
-        if (totalEl) totalEl.textContent = totalRate.toFixed(2) + '%';
         setSliderFill(spreadSlider);
+        updateSpreadTotal(id, t.spread, anchor);
       }
     }
 
-    // Year buttons
-    card.querySelectorAll('.years-mini .yr').forEach(btn => {
+    // Interval slider (mcz, mlcz)
+    if (['mcz', 'mlcz'].includes(id)) {
+      const intSlider = document.getElementById(`${id}IntervalSlider`);
+      const intEl     = document.getElementById(`${id}Interval`);
+      if (intSlider && intEl) {
+        intSlider.addEventListener('input', () => {
+          t.interval = parseInt(intSlider.value);
+          intEl.textContent = t.interval + ' שנים';
+          setSliderFill(intSlider);
+          recalcAllTracks();
+        });
+        setSliderFill(intSlider);
+      }
+    }
+
+    // Year buttons per track
+    card.querySelectorAll('.track-years-row .yr').forEach(btn => {
       btn.addEventListener('click', () => {
-        card.querySelectorAll('.years-mini .yr').forEach(b => b.classList.remove('active'));
+        card.querySelectorAll('.track-years-row .yr').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         t.years = parseInt(btn.dataset.val);
+        const manual = card.querySelector('.yr-manual');
+        if (manual) manual.value = t.years;
         recalcAllTracks();
       });
     });
 
-    // Amortization buttons
+    // Manual year input per track
+    const yrManual = card.querySelector('.yr-manual');
+    if (yrManual) {
+      yrManual.addEventListener('input', () => {
+        const v = Math.min(30, Math.max(1, parseInt(yrManual.value) || 20));
+        t.years = v;
+        card.querySelectorAll('.track-years-row .yr').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.val) === v);
+        });
+        recalcAllTracks();
+      });
+    }
+
+    // Amort buttons
     card.querySelectorAll('.amort-row .am').forEach(btn => {
       btn.addEventListener('click', () => {
         card.querySelectorAll('.amort-row .am').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         t.amort = btn.dataset.val;
+        // Show/hide grace input
+        const graceDiv = document.getElementById(`${id}-grace`);
+        if (graceDiv) graceDiv.classList.toggle('hidden', t.amort !== 'grace');
         recalcAllTracks();
       });
     });
 
+    // Grace months input
+    const graceInp = card.querySelector('.grace-months');
+    if (graceInp) {
+      graceInp.addEventListener('input', () => {
+        t.graceMo = parseInt(graceInp.value) || 12;
+        recalcAllTracks();
+      });
+    }
+
     // Info button
     const infoBtn = card.querySelector('.info-circle');
-    if (infoBtn && TRACK_INFO[id]) {
-      infoBtn.addEventListener('click', (e) => {
+    if (infoBtn) {
+      infoBtn.addEventListener('click', e => {
         e.stopPropagation();
-        openModal(TRACK_INFO[id].title, TRACK_INFO[id].body);
+        const info = TRACK_INFO[id];
+        if (info) openModal(info.title, info.body);
       });
     }
   });
 
-  // ── INFO BTN TOOLTIPS ─────────────────────
-  document.querySelectorAll('.info-btn[title]').forEach(el => {
-    el.addEventListener('click', () => {
-      openModal('מידע', el.title);
-    });
+  /* ── INFO BTN MODALS ── */
+  document.querySelectorAll('.info-btn[data-modal-title]').forEach(el => {
+    el.addEventListener('click', () => openModal(el.dataset.modalTitle, el.dataset.modalBody));
   });
 
-  // ── MODAL ─────────────────────────────────
+  /* ── MODAL ── */
   document.getElementById('modalClose')?.addEventListener('click', closeModal);
   document.getElementById('modalOverlay')?.addEventListener('click', e => {
     if (e.target === e.currentTarget) closeModal();
   });
 
-  // ── INITIAL RENDER ─────────────────────────
+  /* ── INIT ── */
   updateStep1();
   recalcAllTracks();
-
-  // Init all slider fills
   document.querySelectorAll('.slider').forEach(setSliderFill);
 });
 
-/* ═══════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════ */
-function bindInputSlider(inputId, sliderId, onChange) {
-  const input  = document.getElementById(inputId);
-  const slider = document.getElementById(sliderId);
-  if (!input && !slider) return;
-
-  const getVal = () => {
-    if (input) return parseNum(input.value);
-    return parseFloat(slider?.value) || 0;
-  };
-
-  if (input) {
-    input.addEventListener('input', () => {
-      const v = parseNum(input.value);
-      if (slider) {
-        slider.value = Math.min(v, parseFloat(slider.max));
-        setSliderFill(slider);
-      }
-      onChange(v);
-    });
-    input.addEventListener('blur', () => formatInput(input));
-  }
-
-  if (slider) {
-    slider.addEventListener('input', () => {
-      const v = parseFloat(slider.value);
-      if (input) input.value = v.toLocaleString('he-IL');
-      setSliderFill(slider);
-      onChange(v);
-    });
-    setSliderFill(slider);
-  }
-}
-
-function syncEquityField() {
-  const el     = document.getElementById('equityAmount');
-  const slider = document.getElementById('equitySlider');
-  if (el)     el.value = STATE.equityAmount.toLocaleString('he-IL');
-  if (slider) {
-    slider.value = Math.min(STATE.equityAmount, parseFloat(slider.max));
-    setSliderFill(slider);
-  }
-}
-
 function openModal(title, body) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalBody').textContent  = body;
-  document.getElementById('modalOverlay').classList.add('open');
+  setText('modalTitle', title);
+  setText('modalBody',  body);
+  document.getElementById('modalOverlay')?.classList.add('open');
 }
 function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalOverlay')?.classList.remove('open');
 }

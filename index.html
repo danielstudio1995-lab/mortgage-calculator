@@ -26,20 +26,18 @@
 
 <!-- ═══════════════ PAGE 1 ═══════════════ -->
 <div id="step1" class="page active">
-
   <div class="page-header">
     <span class="page-badge">MORTGAGE CALCULATOR 🏠</span>
     <h1 class="page-title">כמה משכנתא תוכלו לקחת?</h1>
-    <p class="page-sub">הזינו מחיר דירה <strong>או</strong> הון עצמי — השני יחושב אוטומטית בהתאם להנחיות בנק ישראל.</p>
+    <p class="page-sub">הזינו מחיר דירה <strong>או</strong> הון עצמי — השני יחושב אוטומטית.</p>
   </div>
 
-  <!-- STEP 01: Purchase Type -->
+  <!-- STEP 01 -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">מה מטרת המשכנתא?</h2>
       <span class="step-badge">STEP 01</span>
     </div>
-    <!-- RTL order: rightmost = first option visually -->
     <div class="purchase-grid" id="purchaseTypes">
       <button class="purchase-card active" data-type="first" data-ltv="75">
         <span class="purchase-icon">🏠</span>
@@ -64,38 +62,33 @@
       </button>
     </div>
 
-    <!-- Discounted Housing Fields -->
+    <!-- מחיר למשתכן extra fields -->
     <div id="discountedFields" class="discounted-fields">
       <div class="field-row">
         <div class="field-group">
           <label class="field-label">שווי שוק של הדירה
-            <span class="info-btn" data-modal-title="שווי שוק" data-modal-body="הבנק מחשב את המימון לפי שווי שוק (לא לפי מחיר הרכישה המוזל). התקרה היא 2,100,000 ₪.">ℹ</span>
+            <span class="info-btn" data-modal-title="שווי שוק" data-modal-body="הבנק מחשב את המימון לפי שווי שוק (לא לפי מחיר הרכישה המוזל). התקרה היא 2,100,000 ₪. אם שווי השוק מעל התקרה — הבנק יממן 75% מ-2,100,000 ₪.">ℹ</span>
           </label>
           <div class="input-wrap">
             <span class="currency-sign">₪</span>
-            <input type="text" id="marketValue" class="num-input" value="1,800,000" />
+            <input type="text" id="marketValue" class="num-input" value="1,600,000" />
           </div>
           <div class="slider-wrap">
-            <input type="range" id="marketValueSlider" min="500000" max="2100000" step="50000" value="1800000" class="slider" />
-            <div class="slider-labels"><span>2.1M</span><span>500K</span></div>
+            <input type="range" id="marketValueSlider" min="500000" max="3000000" step="50000" value="1600000" class="slider" />
+            <div class="slider-labels"><span>500K</span><span>3M</span></div>
           </div>
           <p class="field-note cap-note" id="marketValueCapNote"></p>
         </div>
         <div class="field-group">
           <div class="toggle-row">
-            <label class="field-label">קיבלתי מענק זכאות?</label>
+            <label class="field-label">קיבלתי מענק פריפריה?</label>
             <label class="toggle-switch">
               <input type="checkbox" id="hasGrant" />
               <span class="toggle-track"></span>
             </label>
           </div>
           <div id="grantFields" class="grant-fields hidden">
-            <label class="field-label small">סכום המענק</label>
-            <div class="input-wrap">
-              <span class="currency-sign">₪</span>
-              <input type="text" id="grantAmount" class="num-input" value="40,000" />
-            </div>
-            <p class="field-note">עם מענק: מינימום הון עצמי <strong>60,000 ₪</strong></p>
+            <p class="field-note grant-note">עם מענק: מינימום הון עצמי <strong>60,000 ₪</strong></p>
           </div>
           <p id="noGrantNote" class="field-note">ללא מענק: מינימום הון עצמי <strong>100,000 ₪</strong></p>
         </div>
@@ -103,39 +96,53 @@
     </div>
   </div>
 
-  <!-- STEP 02: Property & Equity -->
+  <!-- STEP 02 -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">מחיר הדירה וההון העצמי</h2>
       <span class="step-badge">STEP 02</span>
     </div>
+
+    <!-- Driver toggle -->
+    <div class="driver-toggle-row">
+      <span class="driver-label">אני יודע את:</span>
+      <div class="driver-pills">
+        <button class="driver-pill active" id="driverPrice">מחיר הדירה</button>
+        <button class="driver-pill" id="driverEquity">הון העצמי</button>
+      </div>
+    </div>
+
     <div class="dual-inputs">
       <div class="field-group">
-        <label class="field-label">מחיר הדירה
-          <span class="info-btn" data-modal-title="מחיר הדירה" data-modal-body="שווי הנכס לפי חוזה הרכישה. במחיר למשתכן — הזינו את מחיר הרכישה בפועל, לא שווי השוק.">ℹ</span>
+        <label class="field-label" id="priceLabel">מחיר הדירה
+          <span class="info-btn" data-modal-title="מחיר הדירה" data-modal-body="שווי הנכס לפי חוזה הרכישה.">ℹ</span>
         </label>
-        <div class="input-wrap">
+        <div class="input-wrap" id="priceWrap">
           <span class="currency-sign">₪</span>
           <input type="text" id="propertyPrice" class="num-input" value="2,000,000" />
         </div>
         <div class="slider-wrap">
           <input type="range" id="propertySlider" min="400000" max="10000000" step="50000" value="2000000" class="slider" />
-          <div class="slider-labels"><span>10M</span><span>400K</span></div>
+          <div class="slider-labels"><span>400K</span><span>10M</span></div>
         </div>
+        <p class="field-hint" id="priceHint"></p>
       </div>
-      <button class="swap-btn" id="swapBtn" title="שנה עדיפות חישוב">⇄</button>
+
+      <button class="swap-btn" id="swapBtn" title="החלף">⇄</button>
+
       <div class="field-group">
-        <label class="field-label">הון עצמי
-          <span class="info-btn" data-modal-title="הון עצמי" data-modal-body="הסכום שברשותכם. שינוי כאן ישפיע על גובה המשכנתא. ניתן להחליף עדיפות חישוב עם כפתור ⇄.">ℹ</span>
+        <label class="field-label" id="equityLabel">הון עצמי
+          <span class="info-btn" data-modal-title="הון עצמי" data-modal-body="הסכום שברשותכם לרכישה. שינוי כאן יחשב את מחיר הדירה המקסימלי שתוכלו לרכוש.">ℹ</span>
         </label>
-        <div class="input-wrap">
+        <div class="input-wrap" id="equityWrap">
           <span class="currency-sign">₪</span>
           <input type="text" id="equityAmount" class="num-input" value="500,000" />
         </div>
         <div class="slider-wrap">
           <input type="range" id="equitySlider" min="60000" max="5000000" step="10000" value="500000" class="slider" />
-          <div class="slider-labels"><span>5M</span><span>60K</span></div>
+          <div class="slider-labels"><span>60K</span><span>5M</span></div>
         </div>
+        <p class="field-hint" id="equityHint"></p>
       </div>
     </div>
 
@@ -149,7 +156,7 @@
     </div>
   </div>
 
-  <!-- STEP 03: Years -->
+  <!-- STEP 03 -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">לכמה שנים?</h2>
@@ -157,11 +164,11 @@
     </div>
     <div class="years-row">
       <div class="years-grid">
-        <button class="year-btn" data-years="30">30<span>שנה</span></button>
-        <button class="year-btn" data-years="25">25<span>שנה</span></button>
-        <button class="year-btn active" data-years="20">20<span>שנה</span></button>
-        <button class="year-btn" data-years="15">15<span>שנה</span></button>
         <button class="year-btn" data-years="10">10<span>שנה</span></button>
+        <button class="year-btn" data-years="15">15<span>שנה</span></button>
+        <button class="year-btn active" data-years="20">20<span>שנה</span></button>
+        <button class="year-btn" data-years="25">25<span>שנה</span></button>
+        <button class="year-btn" data-years="30">30<span>שנה</span></button>
       </div>
       <div class="years-manual">
         <label class="field-label small">או הזינו ידנית</label>
@@ -172,6 +179,16 @@
       </div>
     </div>
     <p class="card-note">ככל שהתקופה ארוכה יותר — ההחזר החודשי נמוך יותר, אך הריבית הכוללת גבוהה יותר.</p>
+
+    <!-- Estimated monthly from Step 03 -->
+    <div class="monthly-estimate-box" id="monthlyEstimateBox">
+      <div class="me-row">
+        <span class="me-label">החזר חודשי משוער</span>
+        <span class="me-note">(ריבית ממוצעת 5%)</span>
+      </div>
+      <div class="me-amount" id="monthlyEstimate">—</div>
+      <div class="me-sub" id="monthlyEstimateSub"></div>
+    </div>
   </div>
 
   <!-- Result -->
@@ -181,7 +198,7 @@
       <div class="result-right">
         <p class="result-label">גובה המשכנתא המשוערת</p>
         <div class="result-amount" id="mortgageAmount">—</div>
-        <p class="result-sub" id="resultSub">הזינו מחיר דירה ו/או הון עצמי</p>
+        <p class="result-sub" id="resultSub">הזינו נתונים כדי לחשב</p>
       </div>
     </div>
     <div class="cta-next">
@@ -193,30 +210,29 @@
     </div>
   </div>
 
-  <div class="upsell-card">
+  <div class="upsell-card" id="zakautUpsell">
     <div class="upsell-content">
-      <h3>בדקו מחשבון זכאות למשכנתא</h3>
+      <h3>בדקו זכאות למשכנתא</h3>
       <p>מצב משפחתי, שירותים צבאי, ותק ועוד — זכאות יכולה להוריד ריבית ולשפר את תנאי המשכנתא שלכם.</p>
     </div>
-    <button class="upsell-btn">←</button>
+    <button class="upsell-btn" id="zakautBtn">←</button>
   </div>
 
-  <p class="disclaimer">החישוב אינדיקטיבי בלבד ואינו מהווה הצעה לאישור משכנתא. <strong>יש להתייעץ עם יועץ משכנתאות מורשה לפני כל החלטה.</strong></p>
+  <p class="disclaimer">החישוב אינדיקטיבי בלבד. <strong>יש להתייעץ עם יועץ משכנתאות מורשה לפני כל החלטה.</strong></p>
 </div>
 
 <!-- ═══════════════ PAGE 2 ═══════════════ -->
 <div id="step2" class="page">
-
   <div class="page-header">
     <span class="page-badge">TRACK PLANNER 📊</span>
     <h1 class="page-title">מחשבון מסלולים</h1>
     <p class="page-sub">בנו את תמהיל המשכנתא — ריביות לפי עוגני בנק ישראל, לוחות סילוקין, תחזית הצמדה ועוד.</p>
   </div>
 
-  <!-- STEP 01: Total + Inflation -->
+  <!-- STEP 01 -->
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">גובה המשכנתא</h2>
+      <h2 class="card-title">גובה המשכנתא ואינפלציה</h2>
       <span class="step-badge">STEP 01</span>
     </div>
     <div class="step2-top-row">
@@ -228,7 +244,7 @@
         </div>
         <div class="slider-wrap">
           <input type="range" id="totalMortgageSlider" min="200000" max="5000000" step="50000" value="1000000" class="slider" />
-          <div class="slider-labels"><span>5M</span><span>200K</span></div>
+          <div class="slider-labels"><span>200K</span><span>5M</span></div>
         </div>
       </div>
       <div class="inflation-box">
@@ -236,27 +252,26 @@
         <div class="inflation-display">
           <strong id="inflationRate">2.0%</strong>
           <span>תחזית אינפלציה שנתית</span>
-          <small id="inflationNote">יעד בנק ישראל</small>
+          <small>יעד בנק ישראל</small>
         </div>
         <button class="adj-btn" id="inflPlus">+</button>
       </div>
     </div>
     <div class="fixed-track-rule" id="fixedTrackRule">
-      <span>⚠️ לפחות <strong>שליש</strong> מהמשכנתא חייב להיות במסלול קבוע (קל"צ / ק"צ / זכאות) — דרישת בנק ישראל. מסלולים קבועים: <strong id="fixedPct">0%</strong></span>
+      <span>⚠️ לפחות <strong>שליש</strong> מהמשכנתא חייב להיות במסלול קבוע (קל"צ / ק"צ / זכאות) — דרישת בנק ישראל. מסלולים קבועים כעת: <strong id="fixedPct">0%</strong></span>
       <span class="rule-check" id="fixedCheck"></span>
     </div>
   </div>
 
-  <!-- STEP 02: Tracks -->
+  <!-- STEP 02 — Tracks -->
   <div class="card">
     <div class="card-header">
       <h2 class="card-title">בחרו מסלולים ובנו תמהיל</h2>
       <span class="step-badge">STEP 02</span>
     </div>
-
     <div id="tracksContainer">
 
-      <!-- ── קל"צ ── -->
+      <!-- קל"צ -->
       <div class="track-card enabled" data-track="kalatz" data-fixed="true">
         <div class="track-header">
           <label class="track-toggle"><input type="checkbox" class="track-enable" checked /><span class="check-box"></span></label>
@@ -270,19 +285,28 @@
             <span class="slider-val" id="kalatzPct">33%</span>
             <input type="range" class="slider track-pct-slider" id="kalatzPctSlider" min="0" max="100" value="33" />
           </div>
-          <div class="slider-row">
-            <label>ריבית</label>
-            <span class="slider-val" id="kalatzRate">4.50%</span>
-            <input type="range" class="slider rate-slider" id="kalatzRateSlider" min="350" max="650" value="450" step="5" />
+          <div class="rate-row-wrap">
+            <div class="slider-row">
+              <label>ריבית</label>
+              <span class="slider-val" id="kalatzRate">4.50%</span>
+              <input type="range" class="slider rate-slider" id="kalatzRateSlider" min="350" max="650" value="450" step="5" />
+            </div>
+            <div class="rate-range-controls">
+              <span class="rate-range-label">טווח: <span id="kalatzRangeMin">3.50%</span>–<span id="kalatzRangeMax">6.50%</span></span>
+              <button class="range-adj" data-track="kalatz" data-dir="widen">הרחב</button>
+              <button class="range-adj" data-track="kalatz" data-dir="narrow">צמצם</button>
+            </div>
           </div>
           <div class="track-years-row" data-target="kalatz">
             <span class="years-label">שנים</span>
-            <button class="yr" data-val="30">30</button>
-            <button class="yr" data-val="25">25</button>
-            <button class="yr active" data-val="20">20</button>
-            <button class="yr" data-val="15">15</button>
             <button class="yr" data-val="10">10</button>
-            <input type="number" class="yr-manual" value="20" min="1" max="30" />
+            <button class="yr" data-val="15">15</button>
+            <button class="yr active" data-val="20">20</button>
+            <button class="yr" data-val="25">25</button>
+            <button class="yr" data-val="30">30</button>
+            <input type="number" class="yr-manual" value="20" min="1" max="30" title="שנים ידני" />
+            <input type="number" class="mo-manual" value="240" min="1" max="360" title="חודשים ידני" />
+            <span class="mo-label">חודשים</span>
           </div>
           <div class="amort-row" data-target="kalatz">
             <span class="amort-label">לוח</span>
@@ -297,13 +321,14 @@
           </div>
           <div class="track-results">
             <div class="tr-result"><span>החזר חודשי</span><strong id="kalatzMonthly">—</strong></div>
+            <div class="tr-result"><span>לכל ₪1,000</span><strong id="kalatzPer1k">—</strong></div>
             <div class="tr-result highlight"><span>החזר חודשי בשיא</span><strong id="kalatzPeak">—</strong></div>
             <div class="tr-result"><span>סך החזר</span><strong id="kalatzTotal">—</strong></div>
           </div>
         </div>
       </div>
 
-      <!-- ── ק"צ ── -->
+      <!-- ק"צ -->
       <div class="track-card enabled" data-track="katz" data-fixed="true">
         <div class="track-header">
           <label class="track-toggle"><input type="checkbox" class="track-enable" checked /><span class="check-box"></span></label>
@@ -317,19 +342,28 @@
             <span class="slider-val" id="katzPct">0%</span>
             <input type="range" class="slider track-pct-slider" id="katzPctSlider" min="0" max="100" value="0" />
           </div>
-          <div class="slider-row">
-            <label>ריבית</label>
-            <span class="slider-val" id="katzRate">2.50%</span>
-            <input type="range" class="slider rate-slider" id="katzRateSlider" min="150" max="500" value="250" step="5" />
+          <div class="rate-row-wrap">
+            <div class="slider-row">
+              <label>ריבית</label>
+              <span class="slider-val" id="katzRate">2.50%</span>
+              <input type="range" class="slider rate-slider" id="katzRateSlider" min="150" max="500" value="250" step="5" />
+            </div>
+            <div class="rate-range-controls">
+              <span class="rate-range-label">טווח: <span id="katzRangeMin">1.50%</span>–<span id="katzRangeMax">5.00%</span></span>
+              <button class="range-adj" data-track="katz" data-dir="widen">הרחב</button>
+              <button class="range-adj" data-track="katz" data-dir="narrow">צמצם</button>
+            </div>
           </div>
           <div class="track-years-row" data-target="katz">
             <span class="years-label">שנים</span>
-            <button class="yr" data-val="30">30</button>
-            <button class="yr" data-val="25">25</button>
-            <button class="yr active" data-val="20">20</button>
-            <button class="yr" data-val="15">15</button>
             <button class="yr" data-val="10">10</button>
+            <button class="yr" data-val="15">15</button>
+            <button class="yr active" data-val="20">20</button>
+            <button class="yr" data-val="25">25</button>
+            <button class="yr" data-val="30">30</button>
             <input type="number" class="yr-manual" value="20" min="1" max="30" />
+            <input type="number" class="mo-manual" value="240" min="1" max="360" />
+            <span class="mo-label">חודשים</span>
           </div>
           <div class="amort-row" data-target="katz">
             <span class="amort-label">לוח</span>
@@ -344,13 +378,62 @@
           </div>
           <div class="track-results">
             <div class="tr-result"><span>החזר חודשי</span><strong id="katzMonthly">—</strong></div>
+            <div class="tr-result"><span>לכל ₪1,000</span><strong id="katzPer1k">—</strong></div>
             <div class="tr-result highlight"><span>החזר חודשי בשיא</span><strong id="katzPeak">—</strong></div>
             <div class="tr-result"><span>סך החזר</span><strong id="katzTotal">—</strong></div>
           </div>
         </div>
       </div>
 
-      <!-- ── פריים ── -->
+      <!-- זכאות — now alongside fixed tracks -->
+      <div class="track-card enabled" data-track="zakaut" data-fixed="true">
+        <div class="track-header">
+          <label class="track-toggle"><input type="checkbox" class="track-enable" checked /><span class="check-box"></span></label>
+          <button class="info-circle" data-track-info="zakaut">ℹ</button>
+          <h3 class="track-name">זכאות</h3>
+          <span class="track-tag zakaut-tag">מדינה — קבוע צמוד</span>
+        </div>
+        <div class="track-body">
+          <div class="track-info-box">
+            <span>⭐</span>
+            <span>הלוואת זכאות — ריבית קבועה צמודה למדד לפי תקופה. ריביות מעודכנות לאוגוסט 2026. בחרו תקופה והריבית תתעדכן אוטומטית.</span>
+          </div>
+          <div class="slider-row">
+            <label>אחוז</label>
+            <span class="slider-val" id="zakautPct">0%</span>
+            <input type="range" class="slider track-pct-slider" id="zakautPctSlider" min="0" max="33" value="0" />
+          </div>
+          <div class="zakaut-rate-display">
+            <span class="field-label small">ריבית לפי תקופה:</span>
+            <span class="zakaut-rate-val" id="zakautRateDisplay">—</span>
+          </div>
+          <div class="track-years-row" data-target="zakaut">
+            <span class="years-label">שנים</span>
+            <button class="yr" data-val="5">5</button>
+            <button class="yr" data-val="10">10</button>
+            <button class="yr" data-val="15">15</button>
+            <button class="yr active" data-val="20">20</button>
+            <button class="yr" data-val="25">25</button>
+            <button class="yr" data-val="30">30</button>
+            <input type="number" class="yr-manual" value="20" min="1" max="30" />
+            <input type="number" class="mo-manual" value="240" min="1" max="360" />
+            <span class="mo-label">חודשים</span>
+          </div>
+          <div class="amort-row" data-target="zakaut">
+            <span class="amort-label">לוח</span>
+            <button class="am active" data-val="spitzer">שפיצר</button>
+            <button class="am" data-val="keren">קרן שווה</button>
+          </div>
+          <div class="track-results">
+            <div class="tr-result"><span>החזר חודשי</span><strong id="zakautMonthly">—</strong></div>
+            <div class="tr-result"><span>לכל ₪1,000</span><strong id="zakautPer1k">—</strong></div>
+            <div class="tr-result highlight"><span>החזר חודשי בשיא</span><strong id="zakautPeak">—</strong></div>
+            <div class="tr-result"><span>סך החזר</span><strong id="zakautTotal">—</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- פריים -->
       <div class="track-card enabled" data-track="prime" data-fixed="false">
         <div class="track-header">
           <label class="track-toggle"><input type="checkbox" class="track-enable" checked /><span class="check-box"></span></label>
@@ -364,35 +447,28 @@
             <span class="slider-val" id="primePct">34%</span>
             <input type="range" class="slider track-pct-slider" id="primePctSlider" min="0" max="100" value="34" />
           </div>
-          <div class="anchor-display">
-            <div class="anchor-chip">
-              <span class="anchor-label">ריבית פריים</span>
-              <span class="anchor-val" id="primeRateDisplay">5.50%</span>
+          <div class="rate-row-wrap">
+            <div class="slider-row">
+              <label>ריבית</label>
+              <span class="slider-val" id="primeRate">5.50%</span>
+              <input type="range" class="slider rate-slider" id="primeRateSlider" min="350" max="650" value="550" step="5" />
             </div>
-            <span class="anchor-plus">+</span>
-            <div class="spread-chip">
-              <label class="anchor-label">תוספת</label>
-              <span class="anchor-val" id="primeSpreadDisplay">+0.50%</span>
+            <div class="rate-range-controls">
+              <span class="rate-range-label">טווח: <span id="primeRangeMin">3.50%</span>–<span id="primeRangeMax">6.50%</span></span>
+              <button class="range-adj" data-track="prime" data-dir="widen">הרחב</button>
+              <button class="range-adj" data-track="prime" data-dir="narrow">צמצם</button>
             </div>
-            <span class="anchor-arrow">←</span>
-            <div class="total-chip">
-              <span class="anchor-label">סה"כ</span>
-              <span class="anchor-val accent" id="primeTotalDisplay">6.00%</span>
-            </div>
-          </div>
-          <div class="slider-row">
-            <label>תוספת</label>
-            <span class="slider-val" id="primeSpread">+0.50%</span>
-            <input type="range" class="slider rate-slider" id="primeSpreadSlider" min="-100" max="100" value="50" step="5" />
           </div>
           <div class="track-years-row" data-target="prime">
             <span class="years-label">שנים</span>
-            <button class="yr" data-val="30">30</button>
-            <button class="yr" data-val="25">25</button>
-            <button class="yr active" data-val="20">20</button>
-            <button class="yr" data-val="15">15</button>
             <button class="yr" data-val="10">10</button>
+            <button class="yr" data-val="15">15</button>
+            <button class="yr active" data-val="20">20</button>
+            <button class="yr" data-val="25">25</button>
+            <button class="yr" data-val="30">30</button>
             <input type="number" class="yr-manual" value="20" min="1" max="30" />
+            <input type="number" class="mo-manual" value="240" min="1" max="360" />
+            <span class="mo-label">חודשים</span>
           </div>
           <div class="amort-row" data-target="prime">
             <span class="amort-label">לוח</span>
@@ -407,13 +483,14 @@
           </div>
           <div class="track-results">
             <div class="tr-result"><span>החזר חודשי</span><strong id="primeMonthly">—</strong></div>
+            <div class="tr-result"><span>לכל ₪1,000</span><strong id="primePer1k">—</strong></div>
             <div class="tr-result highlight"><span>החזר חודשי בשיא (+2%)</span><strong id="primePeak">—</strong></div>
             <div class="tr-result"><span>סך החזר</span><strong id="primeTotal">—</strong></div>
           </div>
         </div>
       </div>
 
-      <!-- ── מק"מ ── -->
+      <!-- מק"מ -->
       <div class="track-card enabled" data-track="makam" data-fixed="false">
         <div class="track-header">
           <label class="track-toggle"><input type="checkbox" class="track-enable" checked /><span class="check-box"></span></label>
@@ -427,35 +504,28 @@
             <span class="slider-val" id="makamPct">0%</span>
             <input type="range" class="slider track-pct-slider" id="makamPctSlider" min="0" max="100" value="0" />
           </div>
-          <div class="anchor-display">
-            <div class="anchor-chip">
-              <span class="anchor-label">ריבית מק"מ (בנק ישראל)</span>
-              <span class="anchor-val" id="makamRateDisplay">4.00%</span>
+          <div class="rate-row-wrap">
+            <div class="slider-row">
+              <label>ריבית</label>
+              <span class="slider-val" id="makamRate">4.00%</span>
+              <input type="range" class="slider rate-slider" id="makamRateSlider" min="200" max="700" value="400" step="5" />
             </div>
-            <span class="anchor-plus">+</span>
-            <div class="spread-chip">
-              <span class="anchor-label">תוספת</span>
-              <span class="anchor-val" id="makamSpreadDisplay">+1.30%</span>
+            <div class="rate-range-controls">
+              <span class="rate-range-label">טווח: <span id="makamRangeMin">2.00%</span>–<span id="makamRangeMax">7.00%</span></span>
+              <button class="range-adj" data-track="makam" data-dir="widen">הרחב</button>
+              <button class="range-adj" data-track="makam" data-dir="narrow">צמצם</button>
             </div>
-            <span class="anchor-arrow">←</span>
-            <div class="total-chip">
-              <span class="anchor-label">סה"כ</span>
-              <span class="anchor-val accent" id="makamTotalDisplay">5.30%</span>
-            </div>
-          </div>
-          <div class="slider-row">
-            <label>תוספת</label>
-            <span class="slider-val" id="makamSpread">+1.30%</span>
-            <input type="range" class="slider rate-slider" id="makamSpreadSlider" min="0" max="300" value="130" step="5" />
           </div>
           <div class="track-years-row" data-target="makam">
             <span class="years-label">שנים</span>
-            <button class="yr" data-val="30">30</button>
-            <button class="yr" data-val="25">25</button>
-            <button class="yr active" data-val="20">20</button>
-            <button class="yr" data-val="15">15</button>
             <button class="yr" data-val="10">10</button>
+            <button class="yr" data-val="15">15</button>
+            <button class="yr active" data-val="20">20</button>
+            <button class="yr" data-val="25">25</button>
+            <button class="yr" data-val="30">30</button>
             <input type="number" class="yr-manual" value="20" min="1" max="30" />
+            <input type="number" class="mo-manual" value="240" min="1" max="360" />
+            <span class="mo-label">חודשים</span>
           </div>
           <div class="amort-row" data-target="makam">
             <span class="amort-label">לוח</span>
@@ -470,19 +540,20 @@
           </div>
           <div class="track-results">
             <div class="tr-result"><span>החזר חודשי</span><strong id="makamMonthly">—</strong></div>
+            <div class="tr-result"><span>לכל ₪1,000</span><strong id="makamPer1k">—</strong></div>
             <div class="tr-result highlight"><span>החזר חודשי בשיא (+2%)</span><strong id="makamPeak">—</strong></div>
             <div class="tr-result"><span>סך החזר</span><strong id="makamTotal">—</strong></div>
           </div>
         </div>
       </div>
 
-      <!-- ── מ"צ — משתנה צמודה ── -->
+      <!-- מ"צ -->
       <div class="track-card enabled" data-track="mcz" data-fixed="false">
         <div class="track-header">
           <label class="track-toggle"><input type="checkbox" class="track-enable" checked /><span class="check-box"></span></label>
           <button class="info-circle" data-track-info="mcz">ℹ</button>
           <h3 class="track-name">משתנה צמודת מדד (מ"צ)</h3>
-          <span class="track-tag cpi-tag">צמודה + משתנה</span>
+          <span class="track-tag cpi-tag">צמודה + משתנה | 2%–5%</span>
         </div>
         <div class="track-body">
           <div class="slider-row">
@@ -490,40 +561,33 @@
             <span class="slider-val" id="mczPct">0%</span>
             <input type="range" class="slider track-pct-slider" id="mczPctSlider" min="0" max="100" value="0" />
           </div>
-          <div class="anchor-display">
-            <div class="anchor-chip">
-              <span class="anchor-label">אג"ח ממשלתי</span>
-              <span class="anchor-val" id="mczAnchorDisplay">4.00%</span>
+          <div class="rate-row-wrap">
+            <div class="slider-row">
+              <label>ריבית</label>
+              <span class="slider-val" id="mczRate">3.50%</span>
+              <input type="range" class="slider rate-slider" id="mczRateSlider" min="200" max="500" value="350" step="5" />
             </div>
-            <span class="anchor-plus">+</span>
-            <div class="spread-chip">
-              <span class="anchor-label">תוספת</span>
-              <span class="anchor-val" id="mczSpreadDisplay">+1.30%</span>
-            </div>
-            <span class="anchor-arrow">←</span>
-            <div class="total-chip">
-              <span class="anchor-label">סה"כ</span>
-              <span class="anchor-val accent" id="mczTotalDisplay">5.30%</span>
+            <div class="rate-range-controls">
+              <span class="rate-range-label">טווח: <span id="mczRangeMin">2.00%</span>–<span id="mczRangeMax">5.00%</span></span>
+              <button class="range-adj" data-track="mcz" data-dir="widen">הרחב</button>
+              <button class="range-adj" data-track="mcz" data-dir="narrow">צמצם</button>
             </div>
           </div>
           <div class="slider-row">
-            <label>תוספת</label>
-            <span class="slider-val" id="mczSpread">+1.30%</span>
-            <input type="range" class="slider rate-slider" id="mczSpreadSlider" min="50" max="300" value="130" step="5" />
-          </div>
-          <div class="slider-row">
-            <label>תחנה</label>
+            <label>תכיפות לשינוי</label>
             <span class="slider-val" id="mczInterval">5 שנים</span>
             <input type="range" class="slider" id="mczIntervalSlider" min="1" max="10" value="5" step="1" />
           </div>
           <div class="track-years-row" data-target="mcz">
             <span class="years-label">שנים</span>
-            <button class="yr" data-val="30">30</button>
-            <button class="yr" data-val="25">25</button>
-            <button class="yr active" data-val="20">20</button>
-            <button class="yr" data-val="15">15</button>
             <button class="yr" data-val="10">10</button>
+            <button class="yr" data-val="15">15</button>
+            <button class="yr active" data-val="20">20</button>
+            <button class="yr" data-val="25">25</button>
+            <button class="yr" data-val="30">30</button>
             <input type="number" class="yr-manual" value="20" min="1" max="30" />
+            <input type="number" class="mo-manual" value="240" min="1" max="360" />
+            <span class="mo-label">חודשים</span>
           </div>
           <div class="amort-row" data-target="mcz">
             <span class="amort-label">לוח</span>
@@ -538,19 +602,20 @@
           </div>
           <div class="track-results">
             <div class="tr-result"><span>החזר חודשי</span><strong id="mczMonthly">—</strong></div>
+            <div class="tr-result"><span>לכל ₪1,000</span><strong id="mczPer1k">—</strong></div>
             <div class="tr-result highlight"><span>החזר חודשי בשיא</span><strong id="mczPeak">—</strong></div>
             <div class="tr-result"><span>סך החזר</span><strong id="mczTotal">—</strong></div>
           </div>
         </div>
       </div>
 
-      <!-- ── מל"צ — משתנה לא צמודה ── -->
+      <!-- מל"צ -->
       <div class="track-card enabled" data-track="mlcz" data-fixed="false">
         <div class="track-header">
           <label class="track-toggle"><input type="checkbox" class="track-enable" checked /><span class="check-box"></span></label>
           <button class="info-circle" data-track-info="mlcz">ℹ</button>
           <h3 class="track-name">משתנה לא צמודה (מל"צ)</h3>
-          <span class="track-tag no-cpi-tag">משתנה בלבד</span>
+          <span class="track-tag no-cpi-tag">משתנה בלבד | 3.5%–6.5%</span>
         </div>
         <div class="track-body">
           <div class="slider-row">
@@ -558,40 +623,33 @@
             <span class="slider-val" id="mlczPct">0%</span>
             <input type="range" class="slider track-pct-slider" id="mlczPctSlider" min="0" max="100" value="0" />
           </div>
-          <div class="anchor-display">
-            <div class="anchor-chip">
-              <span class="anchor-label">אג"ח ממשלתי</span>
-              <span class="anchor-val" id="mlczAnchorDisplay">4.00%</span>
+          <div class="rate-row-wrap">
+            <div class="slider-row">
+              <label>ריבית</label>
+              <span class="slider-val" id="mlczRate">5.00%</span>
+              <input type="range" class="slider rate-slider" id="mlczRateSlider" min="350" max="650" value="500" step="5" />
             </div>
-            <span class="anchor-plus">+</span>
-            <div class="spread-chip">
-              <span class="anchor-label">תוספת</span>
-              <span class="anchor-val" id="mlczSpreadDisplay">+1.30%</span>
-            </div>
-            <span class="anchor-arrow">←</span>
-            <div class="total-chip">
-              <span class="anchor-label">סה"כ</span>
-              <span class="anchor-val accent" id="mlczTotalDisplay">5.30%</span>
+            <div class="rate-range-controls">
+              <span class="rate-range-label">טווח: <span id="mlczRangeMin">3.50%</span>–<span id="mlczRangeMax">6.50%</span></span>
+              <button class="range-adj" data-track="mlcz" data-dir="widen">הרחב</button>
+              <button class="range-adj" data-track="mlcz" data-dir="narrow">צמצם</button>
             </div>
           </div>
           <div class="slider-row">
-            <label>תוספת</label>
-            <span class="slider-val" id="mlczSpread">+1.30%</span>
-            <input type="range" class="slider rate-slider" id="mlczSpreadSlider" min="50" max="300" value="130" step="5" />
-          </div>
-          <div class="slider-row">
-            <label>תחנה</label>
+            <label>תכיפות לשינוי</label>
             <span class="slider-val" id="mlczInterval">5 שנים</span>
             <input type="range" class="slider" id="mlczIntervalSlider" min="1" max="10" value="5" step="1" />
           </div>
           <div class="track-years-row" data-target="mlcz">
             <span class="years-label">שנים</span>
-            <button class="yr" data-val="30">30</button>
-            <button class="yr" data-val="25">25</button>
-            <button class="yr active" data-val="20">20</button>
-            <button class="yr" data-val="15">15</button>
             <button class="yr" data-val="10">10</button>
+            <button class="yr" data-val="15">15</button>
+            <button class="yr active" data-val="20">20</button>
+            <button class="yr" data-val="25">25</button>
+            <button class="yr" data-val="30">30</button>
             <input type="number" class="yr-manual" value="20" min="1" max="30" />
+            <input type="number" class="mo-manual" value="240" min="1" max="360" />
+            <span class="mo-label">חודשים</span>
           </div>
           <div class="amort-row" data-target="mlcz">
             <span class="amort-label">לוח</span>
@@ -606,53 +664,9 @@
           </div>
           <div class="track-results">
             <div class="tr-result"><span>החזר חודשי</span><strong id="mlczMonthly">—</strong></div>
+            <div class="tr-result"><span>לכל ₪1,000</span><strong id="mlczPer1k">—</strong></div>
             <div class="tr-result highlight"><span>החזר חודשי בשיא</span><strong id="mlczPeak">—</strong></div>
             <div class="tr-result"><span>סך החזר</span><strong id="mlczTotal">—</strong></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── זכאות ── -->
-      <div class="track-card enabled" data-track="zakaut" data-fixed="true">
-        <div class="track-header">
-          <label class="track-toggle"><input type="checkbox" class="track-enable" checked /><span class="check-box"></span></label>
-          <button class="info-circle" data-track-info="zakaut">ℹ</button>
-          <h3 class="track-name">זכאות</h3>
-          <span class="track-tag zakaut-tag">מדינה — קבוע צמוד</span>
-        </div>
-        <div class="track-body">
-          <div class="track-info-box">
-            <span>⭐</span>
-            <span>הלוואת זכאות ניתנת ע"י המדינה בריבית קבועה צמודה למדד. הזינו את הריבית שקיבלתם מהמשרד לשיכון. זכאות משפרת את תנאי שאר המסלולים מול הבנק.</span>
-          </div>
-          <div class="slider-row">
-            <label>אחוז</label>
-            <span class="slider-val" id="zakautPct">0%</span>
-            <input type="range" class="slider track-pct-slider" id="zakautPctSlider" min="0" max="33" value="0" />
-          </div>
-          <div class="slider-row">
-            <label>ריבית</label>
-            <span class="slider-val" id="zakautRate">3.50%</span>
-            <input type="range" class="slider rate-slider" id="zakautRateSlider" min="200" max="600" value="350" step="5" />
-          </div>
-          <div class="track-years-row" data-target="zakaut">
-            <span class="years-label">שנים</span>
-            <button class="yr" data-val="30">30</button>
-            <button class="yr" data-val="25">25</button>
-            <button class="yr active" data-val="20">20</button>
-            <button class="yr" data-val="15">15</button>
-            <button class="yr" data-val="10">10</button>
-            <input type="number" class="yr-manual" value="20" min="1" max="30" />
-          </div>
-          <div class="amort-row" data-target="zakaut">
-            <span class="amort-label">לוח</span>
-            <button class="am active" data-val="spitzer">שפיצר</button>
-            <button class="am" data-val="keren">קרן שווה</button>
-          </div>
-          <div class="track-results">
-            <div class="tr-result"><span>החזר חודשי</span><strong id="zakautMonthly">—</strong></div>
-            <div class="tr-result highlight"><span>החזר חודשי בשיא</span><strong id="zakautPeak">—</strong></div>
-            <div class="tr-result"><span>סך החזר</span><strong id="zakautTotal">—</strong></div>
           </div>
         </div>
       </div>
@@ -660,7 +674,7 @@
     </div><!-- /tracksContainer -->
 
     <div class="total-pct-bar" id="totalPctBar">
-      <span id="totalPctMsg">⚠️ סכום האחוזים הפעילים: <strong id="totalPctValue">100%</strong></span>
+      <span id="totalPctMsg">סכום האחוזים: <strong id="totalPctValue">67%</strong></span>
     </div>
   </div>
 
@@ -695,8 +709,8 @@
     <div class="mix-bar-wrap"><div class="mix-bar" id="mixBar"></div></div>
   </div>
 
-  <p class="disclaimer">* חישוב ראשוני. ריביות בפועל נקבעות מול הבנק — דרכנו תקבלו את הריביות הטובות ביותר בשוק.</p>
-  <p class="disclaimer">עוגני ריבית: פריים 5.5% (בנק ישראל 4% + 1.5%), מק"מ ≈ ריבית בנק ישראל. ריבית בנק ישראל עשויה להשתנות.</p>
+  <p class="disclaimer">* חישוב ראשוני. ריביות בפועל נקבעות מול הבנק.</p>
+  <p class="disclaimer">ריביות זכאות לפי משרד הבינוי והשיכון — אוגוסט 2026. כפופות לשינוי.</p>
 </div>
 
 <!-- Modal -->

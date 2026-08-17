@@ -118,7 +118,7 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 /* SLIDERS */
 .slider-wrap{display:flex;flex-direction:column;gap:var(--sp-xs)}
 .slider-labels{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted);font-family:var(--font-ui)}
-.slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border);outline:none;cursor:pointer;direction:ltr;transform:scaleX(-1);}
+.slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border);outline:none;cursor:pointer;direction:ltr;transform:scaleX(-1);display:block;}
 .slider::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--green-main);cursor:pointer;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,139,30,.35);transition:transform .15s}
 .slider::-webkit-slider-thumb:hover{transform:scale(1.15)}
 .slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--green-main);cursor:pointer;border:3px solid #fff}

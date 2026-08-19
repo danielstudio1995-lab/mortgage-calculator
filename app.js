@@ -16,7 +16,7 @@ const formatInput=el=>{const v=parseNum(el.value);el.value=v>0?v.toLocaleString(
 function setSliderFill(s){
   if(!s)return;
   const pct=Math.max(0,Math.min(100,((parseFloat(s.value)-parseFloat(s.min))/(parseFloat(s.max)-parseFloat(s.min)))*100));
-  s.style.background=`linear-gradient(to right,#008B1E ${pct}%,#E2E2DC ${pct}%)`;
+  s.style.background=`linear-gradient(to right,#E2E2DC ${pct}%,#008B1E ${pct}%)`;
 }
 
 /* ══════════════════════════════════════

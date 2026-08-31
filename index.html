@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -11,24 +11,15 @@
 </head>
 <body>
 
-<!-- STICKY SUMMARY BAR (Page 2) -->
+<!-- סרגל סיכום צמוד (עמוד 2) -->
 <div class="sticky-summary" id="stickySummary">
   <div class="ss-inner">
-    <div class="ss-total">
-      <span class="ss-label">סכום משכנתא</span>
-      <span class="ss-val" id="ssTotalAmt">—</span>
-    </div>
+    <div class="ss-total"><span class="ss-label">סכום משכנתא</span><span class="ss-val" id="ssTotalAmt">—</span></div>
     <div class="ss-divider"></div>
     <div class="ss-tracks" id="ssTracks"></div>
     <div class="ss-divider"></div>
-    <div class="ss-monthly">
-      <span class="ss-label">החזר חודשי</span>
-      <span class="ss-val accent" id="ssMonthly">—</span>
-    </div>
-    <div class="ss-remain">
-      <span class="ss-label">נותר להקצות</span>
-      <span class="ss-val" id="ssRemain">—</span>
-    </div>
+    <div class="ss-monthly"><span class="ss-label">החזר חודשי</span><span class="ss-val accent" id="ssMonthly">—</span></div>
+    <div class="ss-remain"><span class="ss-label">נותר להקצות</span><span class="ss-val" id="ssRemain">—</span></div>
   </div>
 </div>
 
@@ -37,41 +28,37 @@
   <button class="tab" data-step="2"><span class="tab-icon">📊</span><span class="tab-label">מחשבון מסלולים</span><span class="tab-sub">ריביות &amp; תמהיל</span></button>
 </div>
 
-<!-- ═══ PAGE 1 ═══ -->
+<!-- ═══ עמוד 1 ═══ -->
 <div id="step1" class="page active">
   <div class="page-header">
-    <span class="page-badge">MORTGAGE CALCULATOR 🏠</span>
+    <span class="page-badge">מחשבון משכנתא 🏠</span>
     <h1 class="page-title">כמה משכנתא תוכלו לקחת?</h1>
-    <p class="page-sub">הזינו מחיר דירה או הון עצמי — השני יחושב אוטומטית.</p>
+    <p class="page-sub">הזינו מחיר דירה ו הון עצמי — המחשבון יחשב את גובה המשכנתא.</p>
   </div>
 
-  <!-- STEP 01 -->
+  <!-- שלב 01 -->
   <div class="card">
-    <div class="card-header"><h2 class="card-title">מה מטרת המשכנתא?</h2><span class="step-badge">STEP 01</span></div>
+    <div class="card-header"><h2 class="card-title">מה מטרת המשכנתא?</h2><span class="step-badge">שלב 01</span></div>
     <div class="purchase-grid" id="purchaseTypes">
       <button class="purchase-card active" data-type="first" data-ltv="75">
-        <span class="purchase-icon">🏠</span>
-        <span class="purchase-name">דירה ראשונה</span>
+        <span class="purchase-icon">🏠</span><span class="purchase-name">דירה ראשונה</span>
         <span class="purchase-detail">מינימום <strong>25%</strong> הון עצמי</span>
       </button>
       <button class="purchase-card" data-type="upgrade" data-ltv="70">
-        <span class="purchase-icon">🏡</span>
-        <span class="purchase-name">החלפת דירה</span>
+        <span class="purchase-icon">🏡</span><span class="purchase-name">החלפת דירה</span>
         <span class="purchase-detail">מינימום <strong>30%</strong> הון עצמי</span>
       </button>
       <button class="purchase-card" data-type="invest" data-ltv="50">
-        <span class="purchase-icon">📈</span>
-        <span class="purchase-name">דירה להשקעה</span>
+        <span class="purchase-icon">📈</span><span class="purchase-name">דירה להשקעה</span>
         <span class="purchase-detail">מינימום <strong>50%</strong> הון עצמי</span>
       </button>
       <button class="purchase-card" data-type="discounted" data-ltv="75">
-        <span class="purchase-icon">🏘️</span>
-        <span class="purchase-name">מחיר למשתכן</span>
+        <span class="purchase-icon">🏘️</span><span class="purchase-name">מחיר למשתכן</span>
         <span class="purchase-detail">מינימום <strong>100,000 ₪</strong> הון עצמי</span>
       </button>
     </div>
 
-    <!-- מחיר למשתכן extra -->
+    <!-- שדות מחיר למשתכן -->
     <div id="discountedFields" class="discounted-fields">
       <div class="discounted-inner">
         <div class="field-group">
@@ -80,39 +67,34 @@
           </label>
           <div class="input-wrap"><span class="currency-sign">₪</span><input type="text" id="marketValue" class="num-input" value="1,600,000"/></div>
           <div class="slider-wrap">
-            <input type="range" id="marketValueSlider" min="500000" max="3000000" step="50000" value="1600000" class="slider"/>
+            <input type="range" id="marketValueSlider" min="500000" max="3000000" step="50000" value="1600000" class="slider" direction="rtl"/>
             <div class="slider-labels"><span>500K</span><span>3M</span></div>
           </div>
           <p class="cap-note" id="marketValueCapNote"></p>
         </div>
-        <div class="discounted-result-box" id="discountedResultBox">
-          <div class="dr-row">
-            <span class="dr-label">מימון בנקאי (75%)</span>
-            <span class="dr-val" id="drBankAmt">—</span>
+        <div class="field-group">
+          <label class="field-label">מחיר הדירה בפועל (אחרי הנחה)</label>
+          <div class="input-wrap"><span class="currency-sign">₪</span><input type="text" id="discountedPrice" class="num-input" value="1,200,000"/></div>
+          <div class="slider-wrap">
+            <input type="range" id="discountedPriceSlider" min="200000" max="3000000" step="50000" value="1200000" class="slider" direction="rtl"/>
+            <div class="slider-labels"><span>200K</span><span>3M</span></div>
           </div>
-          <div class="dr-row highlight">
-            <span class="dr-label">הון עצמי נדרש</span>
-            <span class="dr-val" id="drEquityNeeded">—</span>
-          </div>
-          <div class="dr-toggle-row">
-            <label class="toggle-switch"><input type="checkbox" id="hasGrant"/><span class="toggle-track"></span></label>
-            <span class="dr-toggle-label">קיבלתי מענק פריפריה (מינימום 60,000 ₪)</span>
-          </div>
+        </div>
+      </div>
+      <div class="discounted-result-box" id="discountedResultBox">
+        <div class="dr-row"><span class="dr-label">מימון בנקאי (75% משווי שוק)</span><span class="dr-val" id="drBankAmt">—</span></div>
+        <div class="dr-row highlight"><span class="dr-label">הון עצמי נדרש</span><span class="dr-val" id="drEquityNeeded">—</span></div>
+        <div class="dr-toggle-row">
+          <label class="toggle-switch"><input type="checkbox" id="hasGrant"/><span class="toggle-track"></span></label>
+          <span class="dr-toggle-label">קיבלתי מענק פריפריה (מינימום 60,000 ₪)</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- STEP 02 — property & equity (hidden for discounted) -->
+  <!-- שלב 02 -->
   <div class="card" id="step2Card">
-    <div class="card-header"><h2 class="card-title">מחיר הדירה וההון העצמי</h2><span class="step-badge">STEP 02</span></div>
-    <div class="driver-toggle-row">
-      <span class="driver-label">אני יודע את:</span>
-      <div class="driver-pills">
-        <button class="driver-pill active" id="driverPrice">מחיר הדירה</button>
-        <button class="driver-pill" id="driverEquity">הון העצמי</button>
-      </div>
-    </div>
+    <div class="card-header"><h2 class="card-title">מחיר הדירה וההון העצמי</h2><span class="step-badge">שלב 02</span></div>
     <div class="dual-inputs">
       <div class="field-group">
         <label class="field-label">מחיר הדירה</label>
@@ -123,7 +105,7 @@
         </div>
         <p class="field-hint" id="priceHint"></p>
       </div>
-      <button class="swap-btn" id="swapBtn">⇄</button>
+      <div class="swap-spacer"></div>
       <div class="field-group">
         <label class="field-label">הון עצמי</label>
         <div class="input-wrap" id="equityWrap"><span class="currency-sign">₪</span><input type="text" id="equityAmount" class="num-input" value="500,000"/></div>
@@ -134,14 +116,21 @@
         <p class="field-hint" id="equityHint"></p>
       </div>
     </div>
+
+    <!-- מד מימון בנקאי -->
     <div class="ltv-bar-wrap">
-      <div class="ltv-bar-labels"><span>הון עצמי: <strong id="equityPct">25%</strong></span><span>מימון בנקאי: <strong id="ltvPct">75%</strong></span></div>
+      <div class="ltv-bar-labels">
+        <span>הון עצמי: <strong id="equityPct">25%</strong></span>
+        <span>מימון בנקאי: <strong id="ltvPct">75%</strong>
+          <span class="ltv-status" id="ltvStatus"></span>
+        </span>
+      </div>
       <div class="ltv-bar"><div class="ltv-fill" id="ltvFill"></div></div>
       <div id="ltvWarning" class="ltv-warning hidden"></div>
     </div>
   </div>
 
-  <!-- Result card (no Step 03) -->
+  <!-- תוצאה -->
   <div class="result-card">
     <div class="result-card-inner">
       <div class="result-icon">🏠</div>
@@ -151,19 +140,12 @@
         <p class="result-sub" id="resultSub">הזינו נתונים לחישוב</p>
       </div>
     </div>
-    <!-- Monthly estimate range (replaces Step 03) -->
     <div class="monthly-range-box" id="monthlyRangeBox">
       <div class="mr-label">החזר חודשי משוער לפי 25 שנה</div>
       <div class="mr-values">
-        <div class="mr-item">
-          <span class="mr-item-label">מינימום</span>
-          <span class="mr-item-val" id="mrMin">—</span>
-        </div>
+        <div class="mr-item"><span class="mr-item-label">מינימום</span><span class="mr-item-val" id="mrMin">—</span></div>
         <span class="mr-dash">—</span>
-        <div class="mr-item">
-          <span class="mr-item-label">מקסימום</span>
-          <span class="mr-item-val" id="mrMax">—</span>
-        </div>
+        <div class="mr-item"><span class="mr-item-label">מקסימום</span><span class="mr-item-val" id="mrMax">—</span></div>
       </div>
     </div>
     <div class="cta-next">
@@ -179,17 +161,17 @@
   <p class="disclaimer">החישוב אינדיקטיבי בלבד. <strong>יש להתייעץ עם יועץ משכנתאות מורשה לפני כל החלטה.</strong></p>
 </div>
 
-<!-- ═══ PAGE 2 ═══ -->
+<!-- ═══ עמוד 2 ═══ -->
 <div id="step2" class="page">
   <div class="page-header">
-    <span class="page-badge">TRACK PLANNER 📊</span>
+    <span class="page-badge">מחשבון מסלולים 📊</span>
     <h1 class="page-title">מחשבון מסלולים</h1>
     <p class="page-sub">בנו את תמהיל המשכנתא — ריביות, לוחות סילוקין, תחזית הצמדה ועוד.</p>
   </div>
 
-  <!-- STEP 01 -->
+  <!-- שלב 01 -->
   <div class="card">
-    <div class="card-header"><h2 class="card-title">גובה המשכנתא ואינפלציה</h2><span class="step-badge">STEP 01</span></div>
+    <div class="card-header"><h2 class="card-title">גובה המשכנתא ואינפלציה</h2><span class="step-badge">שלב 01</span></div>
     <div class="step2-top-row">
       <div class="field-group" style="flex:1">
         <label class="field-label">סכום המשכנתא הכולל</label>
@@ -211,15 +193,14 @@
     </div>
   </div>
 
-  <!-- STEP 02 Tracks -->
+  <!-- שלב 02 — מסלולים -->
   <div class="card">
-    <div class="card-header"><h2 class="card-title">בחרו מסלולים ובנו תמהיל</h2><span class="step-badge">STEP 02</span></div>
+    <div class="card-header"><h2 class="card-title">בחרו מסלולים ובנו תמהיל</h2><span class="step-badge">שלב 02</span></div>
 
-    <!-- GROUP: קבועות — starts collapsed -->
+    <!-- קבועות -->
     <div class="track-group">
       <button class="group-header" id="groupFixedBtn">
-        <span class="group-icon">🔒</span>
-        <span class="group-title">מסלולים קבועים</span>
+        <span class="group-icon">🔒</span><span class="group-title">מסלולים קבועים</span>
         <span class="group-subtitle">קל"צ · ק"צ · זכאות</span>
         <span class="group-arrow closed" id="groupFixedArrow">▼</span>
       </button>
@@ -231,12 +212,13 @@
             <label class="track-toggle"><input type="checkbox" class="track-enable" checked/><span class="check-box"></span></label>
             <button class="info-circle" data-track-info="kalatz">ℹ</button>
             <h3 class="track-name">קבועה לא צמודה — קל"צ</h3>
-            
           </div>
           <div class="track-body">
             <div class="amt-only-row">
               <label class="field-label small">סכום המסלול</label>
-              <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="kalatzAmtNum" value="330,000"/></div>
+              <div class="amt-input-row">
+                <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="kalatzAmtNum" value="330,000"/></div>
+              </div>
               <input type="range" class="slider track-pct-slider" id="kalatzPctSlider" min="0" max="100" value="33"/>
             </div>
             <div class="slider-row"><label>ריבית</label><span class="slider-val" id="kalatzRate">4.50%</span><input type="range" class="slider rate-slider" id="kalatzRateSlider" min="350" max="650" value="450" step="5"/></div>
@@ -248,7 +230,7 @@
             </div>
             <div class="amort-row"><span class="amort-label">לוח</span><button class="am active" data-val="spitzer">שפיצר</button><button class="am" data-val="keren">קרן שווה</button><button class="am" data-val="balloon">בלון</button><button class="am" data-val="grace">גרייס</button></div>
             <div class="grace-input hidden" id="kalatz-grace"><label class="field-label small">חודשי גרייס</label><input type="number" class="grace-months" value="12" min="1" max="60"/></div>
-            <div class="balloon-input hidden" id="kalatz-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="60"/></div>
+            <div class="balloon-input hidden" id="kalatz-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="360"/></div>
             <div class="track-results">
               <div class="tr-result"><span>החזר חודשי התחלתי</span><strong id="kalatzMonthly">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="kalatzPer1">—</strong></div>
@@ -265,12 +247,13 @@
             <label class="track-toggle"><input type="checkbox" class="track-enable" checked/><span class="check-box"></span></label>
             <button class="info-circle" data-track-info="katz">ℹ</button>
             <h3 class="track-name">קבועה צמודת מדד — ק"צ</h3>
-            
           </div>
           <div class="track-body">
             <div class="amt-only-row">
               <label class="field-label small">סכום המסלול</label>
-              <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="katzAmtNum" value="0"/></div>
+              <div class="amt-input-row">
+                <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="katzAmtNum" value="0"/></div>
+              </div>
               <input type="range" class="slider track-pct-slider" id="katzPctSlider" min="0" max="100" value="0"/>
             </div>
             <div class="slider-row"><label>ריבית</label><span class="slider-val" id="katzRate">2.50%</span><input type="range" class="slider rate-slider" id="katzRateSlider" min="150" max="500" value="250" step="5"/></div>
@@ -282,7 +265,7 @@
             </div>
             <div class="amort-row"><span class="amort-label">לוח</span><button class="am active" data-val="spitzer">שפיצר</button><button class="am" data-val="keren">קרן שווה</button><button class="am" data-val="balloon">בלון</button><button class="am" data-val="grace">גרייס</button></div>
             <div class="grace-input hidden" id="katz-grace"><label class="field-label small">חודשי גרייס</label><input type="number" class="grace-months" value="12" min="1" max="60"/></div>
-            <div class="balloon-input hidden" id="katz-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="60"/></div>
+            <div class="balloon-input hidden" id="katz-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="360"/></div>
             <div class="track-results">
               <div class="tr-result"><span>החזר חודשי התחלתי</span><strong id="katzMonthly">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="katzPer1">—</strong></div>
@@ -298,14 +281,15 @@
           <div class="track-header">
             <label class="track-toggle"><input type="checkbox" class="track-enable" checked/><span class="check-box"></span></label>
             <button class="info-circle" data-track-info="zakaut">ℹ</button>
-            <h3 class="track-name">זכאות</h3>
-            
+            <h3 class="track-name">זכאות — קבוע צמוד</h3>
           </div>
           <div class="track-body">
-            <div class="track-info-box"><span>⭐</span><span>ריביות לפי תקופה — אוגוסט 2026. הריבית מתעדכנת אוטומטית לפי מספר השנים שנבחר.</span></div>
+            <div class="track-info-box"><span>⭐</span><span>ריביות זכאות לפי תקופה — אוגוסט 2026. הריבית מתעדכנת אוטומטית לפי מספר השנים שנבחר.</span></div>
             <div class="amt-only-row">
               <label class="field-label small">סכום המסלול</label>
-              <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="zakautAmtNum" value="0"/></div>
+              <div class="amt-input-row">
+                <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="zakautAmtNum" value="0"/></div>
+              </div>
               <input type="range" class="slider track-pct-slider" id="zakautPctSlider" min="0" max="33" value="0"/>
             </div>
             <div class="zakaut-rate-display"><span class="field-label small">ריבית לפי תקופה:</span><span class="zakaut-rate-val" id="zakautRateDisplay">2.72%</span></div>
@@ -324,15 +308,13 @@
             </div>
           </div>
         </div>
-
-      </div><!-- /groupFixed -->
+      </div>
     </div>
 
-    <!-- GROUP: משתנות — starts collapsed -->
+    <!-- משתנות -->
     <div class="track-group">
       <button class="group-header" id="groupVarBtn">
-        <span class="group-icon">📈</span>
-        <span class="group-title">מסלולים משתנים</span>
+        <span class="group-icon">📈</span><span class="group-title">מסלולים משתנים</span>
         <span class="group-subtitle">פריים · מק"מ · מ"צ · מל"צ</span>
         <span class="group-arrow closed" id="groupVarArrow">▼</span>
       </button>
@@ -343,13 +325,14 @@
           <div class="track-header">
             <label class="track-toggle"><input type="checkbox" class="track-enable" checked/><span class="check-box"></span></label>
             <button class="info-circle" data-track-info="prime">ℹ</button>
-            <h3 class="track-name">פריים</h3>
-            
+            <h3 class="track-name">פריים — משתנה (בנק ישראל +1.5%)</h3>
           </div>
           <div class="track-body">
             <div class="amt-only-row">
               <label class="field-label small">סכום המסלול</label>
-              <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="primeAmtNum" value="340,000"/></div>
+              <div class="amt-input-row">
+                <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="primeAmtNum" value="340,000"/></div>
+              </div>
               <input type="range" class="slider track-pct-slider" id="primePctSlider" min="0" max="100" value="34"/>
             </div>
             <div class="slider-row"><label>ריבית</label><span class="slider-val" id="primeRate">5.50%</span><input type="range" class="slider rate-slider" id="primeRateSlider" min="350" max="650" value="550" step="5"/></div>
@@ -361,11 +344,11 @@
             </div>
             <div class="amort-row"><span class="amort-label">לוח</span><button class="am active" data-val="spitzer">שפיצר</button><button class="am" data-val="keren">קרן שווה</button><button class="am" data-val="balloon">בלון</button><button class="am" data-val="grace">גרייס</button></div>
             <div class="grace-input hidden" id="prime-grace"><label class="field-label small">חודשי גרייס</label><input type="number" class="grace-months" value="12" min="1" max="60"/></div>
-            <div class="balloon-input hidden" id="prime-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="60"/></div>
+            <div class="balloon-input hidden" id="prime-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="360"/></div>
             <div class="track-results">
               <div class="tr-result"><span>החזר חודשי התחלתי</span><strong id="primeMonthly">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="primePer1">—</strong></div>
-              <div class="tr-result highlight"><span>החזר חודשי בשיא</span><strong id="primePeak">—</strong></div>
+              <div class="tr-result highlight"><span>החזר חודשי בשיא (+2%)</span><strong id="primePeak">—</strong></div>
               <div class="tr-result"><span>סך החזר</span><strong id="primeTotal">—</strong></div>
               <div class="tr-result balloon-end hidden" id="prime-balloon-end"><span>בלון בסוף תקופה</span><strong id="primeBalloonEnd">—</strong></div>
             </div>
@@ -378,12 +361,13 @@
             <label class="track-toggle"><input type="checkbox" class="track-enable" checked/><span class="check-box"></span></label>
             <button class="info-circle" data-track-info="makam">ℹ</button>
             <h3 class="track-name">מק"מ — משתנה שנתי</h3>
-            
           </div>
           <div class="track-body">
             <div class="amt-only-row">
               <label class="field-label small">סכום המסלול</label>
-              <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="makamAmtNum" value="0"/></div>
+              <div class="amt-input-row">
+                <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="makamAmtNum" value="0"/></div>
+              </div>
               <input type="range" class="slider track-pct-slider" id="makamPctSlider" min="0" max="100" value="0"/>
             </div>
             <div class="slider-row"><label>ריבית</label><span class="slider-val" id="makamRate">4.00%</span><input type="range" class="slider rate-slider" id="makamRateSlider" min="200" max="700" value="400" step="5"/></div>
@@ -395,11 +379,11 @@
             </div>
             <div class="amort-row"><span class="amort-label">לוח</span><button class="am active" data-val="spitzer">שפיצר</button><button class="am" data-val="keren">קרן שווה</button><button class="am" data-val="balloon">בלון</button><button class="am" data-val="grace">גרייס</button></div>
             <div class="grace-input hidden" id="makam-grace"><label class="field-label small">חודשי גרייס</label><input type="number" class="grace-months" value="12" min="1" max="60"/></div>
-            <div class="balloon-input hidden" id="makam-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="60"/></div>
+            <div class="balloon-input hidden" id="makam-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="360"/></div>
             <div class="track-results">
               <div class="tr-result"><span>החזר חודשי התחלתי</span><strong id="makamMonthly">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="makamPer1">—</strong></div>
-              <div class="tr-result highlight"><span>החזר חודשי בשיא</span><strong id="makamPeak">—</strong></div>
+              <div class="tr-result highlight"><span>החזר חודשי בשיא (+2%)</span><strong id="makamPeak">—</strong></div>
               <div class="tr-result"><span>סך החזר</span><strong id="makamTotal">—</strong></div>
               <div class="tr-result balloon-end hidden" id="makam-balloon-end"><span>בלון בסוף תקופה</span><strong id="makamBalloonEnd">—</strong></div>
             </div>
@@ -411,13 +395,14 @@
           <div class="track-header">
             <label class="track-toggle"><input type="checkbox" class="track-enable" checked/><span class="check-box"></span></label>
             <button class="info-circle" data-track-info="mcz">ℹ</button>
-            <h3 class="track-name">משתנה צמודת מדד — מ"צ</h3>
-            
+            <h3 class="track-name">משתנה צמודת מדד — מ"צ (2%–5%)</h3>
           </div>
           <div class="track-body">
             <div class="amt-only-row">
               <label class="field-label small">סכום המסלול</label>
-              <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="mczAmtNum" value="0"/></div>
+              <div class="amt-input-row">
+                <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="mczAmtNum" value="0"/></div>
+              </div>
               <input type="range" class="slider track-pct-slider" id="mczPctSlider" min="0" max="100" value="0"/>
             </div>
             <div class="slider-row"><label>ריבית</label><span class="slider-val" id="mczRate">3.50%</span><input type="range" class="slider rate-slider" id="mczRateSlider" min="200" max="500" value="350" step="5"/></div>
@@ -430,7 +415,7 @@
             </div>
             <div class="amort-row"><span class="amort-label">לוח</span><button class="am active" data-val="spitzer">שפיצר</button><button class="am" data-val="keren">קרן שווה</button><button class="am" data-val="balloon">בלון</button><button class="am" data-val="grace">גרייס</button></div>
             <div class="grace-input hidden" id="mcz-grace"><label class="field-label small">חודשי גרייס</label><input type="number" class="grace-months" value="12" min="1" max="60"/></div>
-            <div class="balloon-input hidden" id="mcz-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="60"/></div>
+            <div class="balloon-input hidden" id="mcz-balloon"><label class="field-label small">חודשי בלון</label><input type="number" class="balloon-months" value="12" min="1" max="360"/></div>
             <div class="track-results">
               <div class="tr-result"><span>החזר חודשי התחלתי</span><strong id="mczMonthly">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="mczPer1">—</strong></div>
@@ -446,13 +431,14 @@
           <div class="track-header">
             <label class="track-toggle"><input type="checkbox" class="track-enable" checked/><span class="check-box"></span></label>
             <button class="info-circle" data-track-info="mlcz">ℹ</button>
-            <h3 class="track-name">משתנה לא צמודה — מל"צ</h3>
-            
+            <h3 class="track-name">משתנה לא צמודה — מל"צ (3.5%–6.5%)</h3>
           </div>
           <div class="track-body">
             <div class="amt-only-row">
               <label class="field-label small">סכום המסלול</label>
-              <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="mlczAmtNum" value="0"/></div>
+              <div class="amt-input-row">
+                <div class="input-wrap compact"><span class="currency-sign">₪</span><input type="text" class="num-input amt-input" id="mlczAmtNum" value="0"/></div>
+              </div>
               <input type="range" class="slider track-pct-slider" id="mlczPctSlider" min="0" max="100" value="0"/>
             </div>
             <div class="slider-row"><label>ריבית</label><span class="slider-val" id="mlczRate">5.00%</span><input type="range" class="slider rate-slider" id="mlczRateSlider" min="350" max="650" value="500" step="5"/></div>
@@ -475,8 +461,7 @@
             </div>
           </div>
         </div>
-
-      </div><!-- /groupVar -->
+      </div>
     </div>
 
     <div class="total-pct-bar" id="totalPctBar">
@@ -484,17 +469,18 @@
     </div>
   </div>
 
-  <!-- Results -->
+  <!-- תוצאות -->
   <div class="result-dark-card">
     <div class="result-dark-top">
       <div class="result-dark-icon">📊</div>
       <div class="result-dark-right">
-        <p class="result-dark-label">החזר חודשי כולל</p>
+        <p class="result-dark-label">סיכום תמהיל</p>
         <div class="result-dark-amount" id="totalMonthly">—</div>
         <p class="result-dark-sub" id="activeTracks">— מסלולים פעילים</p>
       </div>
     </div>
     <div class="result-dark-grid">
+      <div class="result-dark-box"><span>החזר חודשי התחלתי</span><strong id="totalMonthlyInitial">—</strong><small>תשלום ראשון</small></div>
       <div class="result-dark-box"><span>החזר חודשי בשיא</span><strong id="totalPeak">—</strong><small>תרחיש עליית ריבית</small></div>
       <div class="result-dark-box"><span>עלות ריבית כוללת</span><strong id="totalInterestCost">—</strong><small>מעל קרן בלבד</small></div>
       <div class="result-dark-box"><span>סך החזר כולל</span><strong id="grandTotal">—</strong><small>קרן + ריבית + הצמדה</small></div>
@@ -503,7 +489,7 @@
     <div class="mix-bar-wrap"><div class="mix-bar" id="mixBar"></div></div>
   </div>
 
-  <!-- Save & Compare -->
+  <!-- השוואת תמהילים -->
   <div class="compare-section">
     <div class="compare-header">
       <h3>השוואת תמהילים</h3>
@@ -520,7 +506,7 @@
   <p class="disclaimer">ריביות זכאות לפי משרד הבינוי והשיכון — אוגוסט 2026.</p>
 </div>
 
-<!-- Modal -->
+<!-- חלון מידע -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal"><button class="modal-close" id="modalClose">✕</button><h3 id="modalTitle"></h3><p id="modalBody"></p></div>
 </div>

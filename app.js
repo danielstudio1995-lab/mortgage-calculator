@@ -17,7 +17,7 @@ function setSliderFill(s){
   if(!s)return;
   const pct=Math.max(0,Math.min(100,((parseFloat(s.value)-parseFloat(s.min))/(parseFloat(s.max)-parseFloat(s.min)))*100));
   // RTL: fill from right — grey on left up to pct, green from pct to right
-  s.style.background=`linear-gradient(to right,#E2E2DC ${pct}%,#008B1E ${pct}%)`;
+  s.style.background=`linear-gradient(to right,#008B1E ${pct}%,#E2E2DC ${pct}%)`;
 }
 
 /* ══════════════════════════════════════

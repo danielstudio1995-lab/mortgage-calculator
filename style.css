@@ -134,8 +134,8 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 .ltv-bar-wrap{margin-top:var(--sp-xl)}
 .ltv-bar-labels{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:var(--sp-sm);color:var(--text-secondary)}
 .ltv-bar-labels strong{color:var(--text-primary);font-weight:700}
-.ltv-bar{height:10px;border-radius:5px;background:var(--border);overflow:hidden}
-.ltv-fill{height:100%;background:linear-gradient(to right,var(--green-light),var(--green-main));border-radius:5px;transition:width .4s}
+.ltv-bar{height:10px;border-radius:5px;background:var(--border);overflow:hidden;display:flex;flex-direction:row-reverse;}
+.ltv-fill{height:100%;background:linear-gradient(to left,var(--green-light),var(--green-main));border-radius:5px;transition:width .4s;margin-right:auto;margin-left:0;float:left;}
 .ltv-warning{margin-top:var(--sp-sm);padding:var(--sp-sm) var(--sp-md);background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--r-sm);font-size:.8rem;color:var(--danger);font-weight:500}
 .ltv-warning.hidden{display:none}
 

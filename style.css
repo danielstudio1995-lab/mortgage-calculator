@@ -360,8 +360,8 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 .ltv-status.bad{background:#fef2f2;color:#c0392b;}
 
 /* AMT INPUT ROW */
-.amt-input-row{display:flex;align-items:center;gap:var(--sp-sm);flex-wrap:wrap;}
-.amt-only-row{display:flex;flex-direction:column;gap:var(--sp-sm);}
+.amt-input-row{display:flex;align-items:center;gap:var(--sp-sm);flex-wrap:wrap;max-width:100%;}
+.amt-only-row{display:flex;flex-direction:column;gap:var(--sp-sm);width:100%;overflow:hidden;}
 .amt-only-row .input-wrap.compact{max-width:220px;}
 
 /* DISCOUNTED FIELDS */

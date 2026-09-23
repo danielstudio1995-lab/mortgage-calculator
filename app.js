@@ -13,18 +13,20 @@ const fmt=n=>(isNaN(n)||n==null||n<=0)?'—':'₪'+Math.round(n).toLocaleString(
 const parseNum=s=>parseFloat(String(s).replace(/[₪,\s]/g,''))||0;
 const setText=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
 const formatInput=el=>{const v=parseNum(el.value);el.value=v>0?v.toLocaleString('he-IL'):'0';};
+
 function setSliderFill(s){
   if(!s)return;
-  const pct=Math.max(0,Math.min(100,((parseFloat(s.value)-parseFloat(s.min))/(parseFloat(s.max)-parseFloat(s.min)))*100));
-  // RTL: fill from right — grey on left up to pct, green from pct to right
+  const min=parseFloat(s.min),max=parseFloat(s.max),val=parseFloat(s.value);
+  const pct=Math.max(0,Math.min(100,((val-min)/(max-min))*100));
+  // RTL: thumb starts right, green fills from right toward left as value increases
+  // direction:rtl means pct=0→thumb on right, pct=100→thumb on left
+  // We want green on RIGHT side growing LEFT: grey[pct%] | green[100-pct%]
   s.style.background=`linear-gradient(to right,#E2E2DC ${100-pct}%,#008B1E ${100-pct}%)`;
 }
 
 /* ══════════════════════════════════════
    חישובי משכנתא — מאומתים
 ══════════════════════════════════════ */
-
-/** שפיצר — תשלום חודשי קבוע */
 function spitzer(P,r,y){
   if(P<=0||r<=0||y<=0)return 0;
   const rm=r/100/12,n=Math.round(y*12);
@@ -32,30 +34,20 @@ function spitzer(P,r,y){
 }
 function spitzerTotal(P,r,y){return spitzer(P,r,y)*Math.round(y*12);}
 
-/** קרן שווה — תשלום ראשון (הגבוה ביותר) */
 function kerenInitial(P,r,y){
   if(P<=0||y<=0)return 0;
   const n=Math.round(y*12),rm=r/100/12;
   return P/n+P*rm;
 }
-/** קרן שווה — תשלום אחרון (הנמוך ביותר) */
-function kerenFinal(P,r,y){
-  if(P<=0||y<=0)return 0;
-  const n=Math.round(y*12),rm=r/100/12;
-  return P/n+(P/n)*rm;
-}
-/** קרן שווה — סה"כ החזר */
 function kerenTotal(P,r,y){
   if(P<=0||y<=0)return P;
   const n=Math.round(y*12),rm=r/100/12;
   return P+P*rm*(n+1)/2;
 }
 
-/** בלון — ריבית בלבד חודשית + קרן בסוף */
 function balloonMonthly(P,r){return P*(r/100/12);}
 function balloonTotal(P,r,y){return balloonMonthly(P,r)*Math.round(y*12)+P;}
 
-/** גרייס — ריבית בלבד לתקופת הגרייס, אחר כך שפיצר */
 function gracePayments(P,r,y,graceMo){
   const gracePmt=P*(r/100/12);
   const remainMo=Math.max(Math.round(y*12)-graceMo,1);
@@ -63,12 +55,7 @@ function gracePayments(P,r,y,graceMo){
   return{grace:gracePmt,post:postPmt,total:gracePmt*graceMo+postPmt*remainMo};
 }
 
-/**
- * צמוד מדד — שפיצר עם ריבית אפקטיבית (נומינלי + אינפלציה)
- * החזר ראשון: שפיצר בריבית אפקטיבית
- * שיא: אחרי 10 שנות צמיחת קרן
- * סה"כ: שפיצר בריבית אפקטיבית על מלוא התקופה
- */
+/* צמוד מדד — שפיצר */
 function cpiSpitzer(P,nomRate,years,annualCPI){
   const effRate=nomRate+annualCPI;
   const monthly=spitzer(P,effRate,years);
@@ -79,7 +66,7 @@ function cpiSpitzer(P,nomRate,years,annualCPI){
   return{monthly,total,peak,per1:P>0?total/P:0};
 }
 
-/** קרן שווה צמודה */
+/* צמוד מדד — קרן שווה */
 function cpiKeren(P,nomRate,years,annualCPI){
   const effRate=nomRate+annualCPI;
   const initial=kerenInitial(P,effRate,years);
@@ -103,33 +90,37 @@ function computeTrack(id,t,totalM,cpi){
       initial=c.initial;peak=c.peak;total=c.total;per1=c.per1;
     }else{
       initial=kerenInitial(P,rate,years);
-      peak=initial; // גבוה ביותר בתחילה
+      peak=initial;
       total=kerenTotal(P,rate,years);
       per1=P>0?total/P:0;
     }
   }else if(t.amort==='balloon'){
     initial=balloonMonthly(P,rate);
-    peak=balloonMonthly(P,rate+2);
+    // בלון: שיא = ריבית בלבד (אין +2% כי לא צמוד)
+    peak=initial;
     total=balloonTotal(P,rate,years);
     balloonEnd=P;
     per1=P>0?total/P:0;
   }else if(t.amort==='grace'){
     const g=gracePayments(P,rate,years,graceMo);
-    initial=g.grace;peak=g.post;total=g.total;
+    initial=g.grace;
+    peak=g.post; // אחרי גרייס — גבוה יותר
+    total=g.total;
     per1=P>0?total/P:0;
   }else{
-    // שפיצר (ברירת מחדל)
+    // שפיצר
     if(t.cpi){
+      // צמוד מדד: שיא לפי גדילת קרן
       const c=cpiSpitzer(P,rate,years,cpi);
       initial=c.monthly;peak=c.peak;total=c.total;per1=c.per1;
-    }else if(!t.fixed){
-      // משתנה לא צמוד — בשיא: +2%
+    }else if(t.variable){
+      // משתנה לא צמוד (פריים, מק"מ, מל"צ) — שיא = אותו תשלום (אין +2%)
       initial=spitzer(P,rate,years);
-      peak=spitzer(P,rate+2,years);
+      peak=initial;
       total=spitzerTotal(P,rate,years);
       per1=P>0?total/P:0;
     }else{
-      // קבוע לא צמוד
+      // קבוע לא צמוד (קל"צ)
       initial=spitzer(P,rate,years);
       peak=initial;
       total=spitzerTotal(P,rate,years);
@@ -146,13 +137,13 @@ const STATE={
   marketValue:1_600_000,discountedPrice:1_200_000,hasGrant:false,
   totalMortgage:1_000_000,inflationRate:2.0,
   tracks:{
-    kalatz:{enabled:true,pct:33,amt:330000,rate:4.50,years:30,amort:'spitzer',fixed:true, cpi:false,graceMo:12,balloonMo:12},
-    katz:  {enabled:true,pct:0, amt:0,     rate:2.50,years:30,amort:'spitzer',fixed:true, cpi:true, graceMo:12,balloonMo:12},
-    zakaut:{enabled:true,pct:0, amt:0,     rate:2.72,years:30,amort:'spitzer',fixed:true, cpi:true, graceMo:12,balloonMo:12},
-    prime: {enabled:true,pct:34,amt:340000,rate:5.50,years:30,amort:'spitzer',fixed:false,cpi:false,graceMo:12,balloonMo:12},
-    makam: {enabled:true,pct:0, amt:0,     rate:4.00,years:30,amort:'spitzer',fixed:false,cpi:false,graceMo:12,balloonMo:12},
-    mcz:   {enabled:true,pct:0, amt:0,     rate:3.50,years:30,amort:'spitzer',fixed:false,cpi:true, graceMo:12,balloonMo:12,interval:5},
-    mlcz:  {enabled:true,pct:0, amt:0,     rate:5.00,years:30,amort:'spitzer',fixed:false,cpi:false,graceMo:12,balloonMo:12,interval:5},
+    kalatz:{enabled:true,pct:0,amt:0,rate:4.50,years:30,amort:'spitzer',fixed:true, cpi:false,variable:false,graceMo:12},
+    katz:  {enabled:true,pct:0,amt:0,rate:2.50,years:30,amort:'spitzer',fixed:true, cpi:true, variable:false,graceMo:12},
+    zakaut:{enabled:true,pct:0,amt:0,rate:2.72,years:30,amort:'spitzer',fixed:true, cpi:true, variable:false,graceMo:12},
+    prime: {enabled:true,pct:0,amt:0,rate:4.75,years:30,amort:'spitzer',fixed:false,cpi:false,variable:true, graceMo:12},
+    makam: {enabled:true,pct:0,amt:0,rate:3.25,years:30,amort:'spitzer',fixed:false,cpi:false,variable:true, graceMo:12},
+    mcz:   {enabled:true,pct:0,amt:0,rate:3.50,years:30,amort:'spitzer',fixed:false,cpi:true, variable:false,graceMo:12,interval:5},
+    mlcz:  {enabled:true,pct:0,amt:0,rate:5.00,years:30,amort:'spitzer',fixed:false,cpi:false,variable:true, graceMo:12,interval:5},
   },
   savedMixes:[],
 };
@@ -160,11 +151,11 @@ const STATE={
 const TRACK_LABELS={kalatz:'קל"צ',katz:'ק"צ',zakaut:'זכאות',prime:'פריים',makam:'מק"מ',mcz:'מ"צ',mlcz:'מל"צ'};
 const TRACK_COLORS=['#008B1E','#AEE27B','#D3A742','#5b21b6','#9d174d','#1e40af','#0f766e'];
 const TRACK_INFO={
-  kalatz:{title:'קבועה לא צמודה (קל"צ)',body:'ריבית קבועה לכל אורך חיי ההלוואה, ללא הצמדה. ההחזר קבוע ויציב לחלוטין. מסלול הביטחון המרכזי.'},
+  kalatz:{title:'קבועה לא צמודה (קל"צ)',body:'ריבית קבועה לכל אורך חיי ההלוואה, ללא הצמדה. ההחזר קבוע ויציב לחלוטין.'},
   katz:  {title:'קבועה צמודת מדד (ק"צ)',body:'ריבית קבועה, אך הקרן צמודה למדד. ריבית נמינלית נמוכה, אך ההחזר גדל עם האינפלציה.'},
   zakaut:{title:'הלוואת זכאות',body:'הלוואה מטעם המדינה בריבית קבועה צמודה. ריביות אוגוסט 2026: עד 5 שנים 3%, עד 10 שנים 2.27%, עד 15 שנים 2.37%, עד 20 שנים 2.48%, עד 25 שנים 2.57%, מעל 25 שנים 2.72%.'},
-  prime: {title:'פריים',body:'ריבית = ריבית בנק ישראל + 1.5%. גמיש לפירעון מוקדם. ההחזר בשיא מחושב לפי תרחיש עליית ריבית של 2%.'},
-  makam: {title:'מק"מ — משתנה שנתי',body:'הריבית מתעדכנת מדי שנה לפי תשואת המק"מ של בנק ישראל.'},
+  prime: {title:'פריים',body:'ריבית = ריבית בנק ישראל + 1.5%. גמיש לפירעון מוקדם. ריבית משתנה — לא צמודה למדד.'},
+  makam: {title:'מק"מ — משתנה שנתי',body:'הריבית מתעדכנת מדי שנה לפי תשואת המק"מ של בנק ישראל. לא צמוד מדד.'},
   mcz:   {title:'משתנה צמודת מדד (מ"צ)',body:'ריבית מתעדכנת בכל תכיפות שינוי עם הצמדה למדד. טווח 2%–5%.'},
   mlcz:  {title:'משתנה לא צמודה (מל"צ)',body:'ריבית מתעדכנת בכל תכיפות שינוי ללא הצמדה. טווח 3.5%–6.5%.'},
 };
@@ -175,53 +166,64 @@ function updateStep1(){
   let mortgage=0,valid=true,ltvPct=0,equityPct=0;
 
   if(purchaseType==='discounted'){
-    const cap=2_100_000,effMV=Math.min(marketValue,cap);
-    const bankAmt=effMV*0.75;
+    const cap=2_100_000;
+    // אם שווי שוק > 2.1M וגם מחיר דירה > 2.1M → לפי הנמוך
+    let baseForBank;
+    if(marketValue>cap&&discountedPrice>cap){
+      baseForBank=Math.min(marketValue,discountedPrice,cap);
+    }else{
+      baseForBank=Math.min(marketValue,cap);
+    }
+    const bankAmt=baseForBank*0.75;
     const calcEquity=discountedPrice-bankAmt;
     const minFloor=hasGrant?60_000:100_000;
     const reqEquity=Math.max(calcEquity,minFloor);
     mortgage=bankAmt;
     setText('drBankAmt',fmt(bankAmt));
     setText('drEquityNeeded',fmt(reqEquity));
+    // הערה אדומה רק אם גם שווי שוק וגם מחיר דירה מעל 2.1M
     const cn=document.getElementById('marketValueCapNote');
-    if(cn)cn.textContent=marketValue>cap?'⚠️ מעל התקרה — מחושב לפי 2,100,000 ₪':'';
+    if(cn)cn.textContent=(marketValue>cap&&discountedPrice>cap)?'⚠️ שני הערכים מעל התקרה — מחושב לפי הנמוך':'';
     ltvPct=discountedPrice>0?(bankAmt/discountedPrice*100):75;
     equityPct=100-ltvPct;
   }else{
-    // שדות עצמאיים — אין סנכרון אוטומטי
     mortgage=propertyPrice-equityAmount;
     ltvPct=propertyPrice>0?(mortgage/propertyPrice*100):0;
     equityPct=100-ltvPct;
-    // בדיקת LTV
+
+    // רמז: מחיר דירה → הון עצמי נדרש
+    const priceHint=document.getElementById('priceHint');
+    if(priceHint){
+      const minEq=Math.ceil(propertyPrice*(100-maxLTV)/100);
+      priceHint.textContent=`הון עצמי נדרש: ${minEq.toLocaleString('he-IL')} ₪`;
+    }
+    // רמז: הון עצמי → מחיר דירה מקסימלי
+    const equityHint=document.getElementById('equityHint');
+    if(equityHint){
+      const maxPrice=Math.floor(equityAmount/((100-maxLTV)/100));
+      equityHint.textContent=`מחיר דירה מקסימלי: ${maxPrice.toLocaleString('he-IL')} ₪`;
+    }
+
     if(ltvPct>maxLTV){
       const needed=Math.ceil(propertyPrice*(100-maxLTV)/100);
       const w=document.getElementById('ltvWarning');
-      if(w){w.textContent=`⚠️ מימון (${ltvPct.toFixed(0)}%) חורג מהמותר. הגדילו הון עצמי ל-${needed.toLocaleString('he-IL')} ₪`;w.classList.remove('hidden');}
+      if(w){w.textContent=`⚠️ מימון (${ltvPct.toFixed(0)}%) חורג. הגדילו הון עצמי ל-${needed.toLocaleString('he-IL')} ₪`;w.classList.remove('hidden');}
       valid=false;
-    }else{
-      document.getElementById('ltvWarning')?.classList.add('hidden');
-    }
+    }else{document.getElementById('ltvWarning')?.classList.add('hidden');}
   }
 
-  // מד LTV צבעוני
   const fill=document.getElementById('ltvFill');
   if(fill)fill.style.width=Math.max(0,Math.min(equityPct,100))+'%';
   setText('equityPct',equityPct.toFixed(0)+'%');
   setText('ltvPct',Math.max(0,ltvPct).toFixed(0)+'%');
 
-  // סטטוס צבעוני
   const statusEl=document.getElementById('ltvStatus');
-  if(statusEl){
-    if(purchaseType==='discounted'){
-      statusEl.textContent=''; statusEl.className='ltv-status';
-    }else{
-      const ok=ltvPct<=maxLTV;
-      statusEl.textContent=ok?'✓ תקין':'⚠️ חורג';
-      statusEl.className='ltv-status '+(ok?'ok':'bad');
-    }
-  }
+  if(statusEl&&purchaseType!=='discounted'){
+    const ok=ltvPct<=maxLTV;
+    statusEl.textContent=ok?'✓ תקין':'⚠️ חורג';
+    statusEl.className='ltv-status '+(ok?'ok':'bad');
+  }else if(statusEl){statusEl.textContent='';statusEl.className='ltv-status';}
 
-  // תוצאה
   const mrBox=document.getElementById('monthlyRangeBox');
   const amountEl=document.getElementById('mortgageAmount'),subEl=document.getElementById('resultSub');
   if(valid&&mortgage>0){
@@ -229,11 +231,7 @@ function updateStep1(){
     if(subEl)subEl.textContent=purchaseType==='discounted'
       ?`75% מימון מ-${fmt(Math.min(marketValue,2_100_000))}`
       :`${Math.max(0,ltvPct).toFixed(0)}% מימון מתוך ${fmt(propertyPrice)}`;
-    if(mrBox){
-      mrBox.classList.add('visible');
-      setText('mrMin',fmt(spitzer(mortgage,2.8,25)));
-      setText('mrMax',fmt(spitzer(mortgage,5.2,25)));
-    }
+    if(mrBox){mrBox.classList.add('visible');setText('mrMin',fmt(spitzer(mortgage,2.8,25)));setText('mrMax',fmt(spitzer(mortgage,5.2,25)));}
     STATE.totalMortgage=Math.max(0,mortgage);
     syncTotalMortgageField();
   }else{
@@ -250,7 +248,7 @@ function syncTotalMortgageField(){
   recalcAllTracks();
 }
 
-/* ── אמט / סליידר סנכרון ── */
+/* ── עמוד 2 ── */
 function onAmtChange(id,amt){
   const t=STATE.tracks[id];if(!t)return;
   t.amt=amt;t.pct=STATE.totalMortgage>0?Math.round(amt/STATE.totalMortgage*100):0;
@@ -264,7 +262,6 @@ function onSliderChange(id,pct){
   recalcAllTracks();
 }
 
-/* ── חישוב עמוד 2 ── */
 function recalcAllTracks(){
   const totalM=STATE.totalMortgage,cpi=STATE.inflationRate;
   let totalMonthly=0,totalPeak=0,totalInterest=0,grandTotal=0,fixedAmt=0,allocatedAmt=0,activeCount=0;
@@ -338,7 +335,6 @@ function updateStickySummary(allocated,monthly,breakdowns){
   if(tracksEl){tracksEl.innerHTML='';breakdowns.forEach(b=>{const chip=document.createElement('div');chip.className='ss-track-chip';chip.innerHTML=`<span class="ss-track-name" style="color:${b.color}">${TRACK_LABELS[b.id]||b.id}</span><span class="ss-track-amt">${fmt(b.amt)}</span>`;tracksEl.appendChild(chip);});}
 }
 
-/* ── שמור והשוואה ── */
 function getCurrentMixSnapshot(){
   const totalM=STATE.totalMortgage,cpi=STATE.inflationRate;
   let totalMonthly=0,totalPeak=0,totalInterest=0,grandTotal=0;const tracks=[];
@@ -349,6 +345,7 @@ function getCurrentMixSnapshot(){
   });
   return{totalMortgage:totalM,totalMonthly,totalPeak,totalInterest,grandTotal,tracks};
 }
+
 function renderCompareTable(){
   const wrap=document.getElementById('compareTableWrap');if(!wrap)return;
   if(STATE.savedMixes.length===0){wrap.innerHTML='<p class="compare-empty">שמרו תמהיל אחד או יותר כדי להשוות</p>';return;}
@@ -367,19 +364,14 @@ function renderCompareTable(){
   wrap.querySelectorAll('.delete-mix-btn').forEach(btn=>btn.addEventListener('click',()=>{STATE.savedMixes=STATE.savedMixes.filter(m=>m.id!==parseInt(btn.dataset.mixId));renderCompareTable();}));
 }
 
-/* ── קישור עוזר ── */
 function bindNumSlider(inputId,sliderId,onChange){
   const inp=document.getElementById(inputId),sld=document.getElementById(sliderId);
   if(inp){inp.addEventListener('input',()=>{const v=parseNum(inp.value);if(sld){sld.value=Math.min(v,parseFloat(sld.max));setSliderFill(sld);}onChange(v);});inp.addEventListener('blur',()=>formatInput(inp));}
   if(sld){sld.addEventListener('input',()=>{const v=parseFloat(sld.value);if(inp)inp.value=Math.round(v).toLocaleString('he-IL');setSliderFill(sld);onChange(v);});setSliderFill(sld);}
 }
 
-/* ══════════════════════════════════════
-   אתחול
-══════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded',()=>{
 
-  /* לשוניות */
   document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>{
     const step=tab.dataset.step;
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===tab));
@@ -388,7 +380,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     else{document.getElementById('stickySummary')?.classList.remove('visible');document.body.classList.remove('has-sticky');}
   }));
 
-  /* סוג רכישה */
   document.querySelectorAll('.purchase-card').forEach(card=>card.addEventListener('click',()=>{
     document.querySelectorAll('.purchase-card').forEach(c=>c.classList.remove('active'));card.classList.add('active');
     STATE.purchaseType=card.dataset.type;STATE.maxLTV=parseInt(card.dataset.ltv);
@@ -398,52 +389,24 @@ document.addEventListener('DOMContentLoaded',()=>{
     updateStep1();
   }));
 
-  /* מענק */
   document.getElementById('hasGrant')?.addEventListener('change',e=>{STATE.hasGrant=e.target.checked;updateStep1();});
-
-  /* שווי שוק */
   bindNumSlider('marketValue','marketValueSlider',v=>{STATE.marketValue=v;updateStep1();});
-
-  /* מחיר דירה בפועל (מחיר למשתכן) */
   bindNumSlider('discountedPrice','discountedPriceSlider',v=>{STATE.discountedPrice=v;updateStep1();});
 
-  /* שדות עצמאיים — ללא סנכרון! */
+  // שדות עצמאיים
   const propEl=document.getElementById('propertyPrice'),propSld=document.getElementById('propertySlider');
   const eqEl=document.getElementById('equityAmount'),eqSld=document.getElementById('equitySlider');
+  if(propEl){propEl.addEventListener('input',()=>{STATE.propertyPrice=parseNum(propEl.value);updateStep1();});propEl.addEventListener('blur',()=>formatInput(propEl));}
+  if(propSld){propSld.addEventListener('input',()=>{STATE.propertyPrice=parseFloat(propSld.value);if(propEl)propEl.value=Math.round(STATE.propertyPrice).toLocaleString('he-IL');setSliderFill(propSld);updateStep1();});setSliderFill(propSld);}
+  if(eqEl){eqEl.addEventListener('input',()=>{STATE.equityAmount=parseNum(eqEl.value);updateStep1();});eqEl.addEventListener('blur',()=>formatInput(eqEl));}
+  if(eqSld){eqSld.addEventListener('input',()=>{STATE.equityAmount=parseFloat(eqSld.value);if(eqEl)eqEl.value=Math.round(STATE.equityAmount).toLocaleString('he-IL');setSliderFill(eqSld);updateStep1();});setSliderFill(eqSld);}
 
-  if(propEl){
-    propEl.addEventListener('input',()=>{STATE.propertyPrice=parseNum(propEl.value);updateStep1();});
-    propEl.addEventListener('blur',()=>formatInput(propEl));
-  }
-  if(propSld){
-    propSld.addEventListener('input',()=>{
-      STATE.propertyPrice=parseFloat(propSld.value);
-      if(propEl)propEl.value=Math.round(STATE.propertyPrice).toLocaleString('he-IL');
-      setSliderFill(propSld);updateStep1();
-    });
-    setSliderFill(propSld);
-  }
-  if(eqEl){
-    eqEl.addEventListener('input',()=>{STATE.equityAmount=parseNum(eqEl.value);updateStep1();});
-    eqEl.addEventListener('blur',()=>formatInput(eqEl));
-  }
-  if(eqSld){
-    eqSld.addEventListener('input',()=>{
-      STATE.equityAmount=parseFloat(eqSld.value);
-      if(eqEl)eqEl.value=Math.round(STATE.equityAmount).toLocaleString('he-IL');
-      setSliderFill(eqSld);updateStep1();
-    });
-    setSliderFill(eqSld);
-  }
-
-  /* מעבר לעמוד 2 */
   document.getElementById('goToStep2Btn')?.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===1));
     document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='step2'));
     recalcAllTracks();
   });
 
-  /* זכאות */
   document.getElementById('zakautUpsell')?.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===1));
     document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='step2'));
@@ -454,26 +417,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   document.getElementById('zakautBtn')?.addEventListener('click',e=>{e.stopPropagation();document.getElementById('zakautUpsell')?.click();});
 
-  /* סכום משכנתא */
   bindNumSlider('totalMortgage','totalMortgageSlider',v=>{STATE.totalMortgage=v;recalcAllTracks();});
-
-  /* אינפלציה */
   document.getElementById('inflPlus')?.addEventListener('click',()=>{STATE.inflationRate=Math.min(10,+(STATE.inflationRate+.5).toFixed(1));setText('inflationRate',STATE.inflationRate+'%');recalcAllTracks();});
   document.getElementById('inflMinus')?.addEventListener('click',()=>{STATE.inflationRate=Math.max(0,+(STATE.inflationRate-.5).toFixed(1));setText('inflationRate',STATE.inflationRate+'%');recalcAllTracks();});
 
-  /* קבוצות מסלולים */
   ['Fixed','Var'].forEach(g=>{
     const btn=document.getElementById(`group${g}Btn`),body=document.getElementById(`group${g}`),arrow=document.getElementById(`group${g}Arrow`);
     if(btn&&body&&arrow)btn.addEventListener('click',()=>{const c=body.classList.toggle('collapsed');arrow.classList.toggle('closed',c);});
   });
 
-  /* סליידרי תכיפות */
   ['mcz','mlcz'].forEach(id=>{
     const sld=document.getElementById(`${id}IntervalSlider`);
     if(sld){sld.addEventListener('input',()=>{STATE.tracks[id].interval=parseInt(sld.value);setText(`${id}Interval`,sld.value+' שנים');setSliderFill(sld);recalcAllTracks();});setSliderFill(sld);}
   });
 
-  /* כרטיסי מסלולים */
   document.querySelectorAll('.track-card').forEach(card=>{
     const id=card.dataset.track,t=STATE.tracks[id];if(!t)return;
     const cb=card.querySelector('.track-enable');

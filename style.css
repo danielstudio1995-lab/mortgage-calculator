@@ -18,7 +18,7 @@ body.has-sticky{padding-top:calc(var(--sticky-h) + 12px + var(--sp-lg));}
 
 /* STICKY SUMMARY */
 .sticky-summary{
-  position:fixed;top:12px;right:16px;left:16px;z-index:200;
+  position:fixed;top:12px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:900px;z-index:200;
   background:var(--green-dark);color:#fff;
   height:var(--sticky-h);
   display:none;

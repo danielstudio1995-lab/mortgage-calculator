@@ -14,15 +14,16 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;background:transparent;}
 body{font-family:var(--font-body);background:transparent;color:var(--text-primary);direction:rtl;padding:var(--sp-md);max-width:900px;margin:0 auto}
-body.has-sticky{padding-top:calc(var(--sticky-h) + var(--sp-md));}
+body.has-sticky{padding-top:calc(var(--sticky-h) + 12px + var(--sp-lg));}
 
 /* STICKY SUMMARY */
 .sticky-summary{
-  position:fixed;top:0;right:0;left:0;z-index:200;
+  position:fixed;top:12px;right:16px;left:16px;z-index:200;
   background:var(--green-dark);color:#fff;
   height:var(--sticky-h);
   display:none;
-  box-shadow:0 2px 16px rgba(0,0,0,.25);
+  border-radius:var(--r-xl);
+  box-shadow:0 4px 24px rgba(0,0,0,.22);
 }
 .sticky-summary.visible{display:flex;align-items:center;}
 .ss-inner{
@@ -318,7 +319,7 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 .compare-actions{display:flex;gap:var(--sp-sm);align-items:center;flex-wrap:wrap}
 .mix-name-input{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:var(--font-body);font-size:.85rem;outline:none;transition:border-color .2s;min-width:160px}
 .mix-name-input:focus{border-color:var(--green-main)}
-.save-mix-btn,.clear-compare-btn{padding:8px 16px;border-radius:var(--r-sm);border:none;cursor:pointer;font-family:var(--font-body);font-size:.82rem;font-weight:600;transition:all .2s;white-space:nowrap}
+.save-mix-btn,.clear-compare-btn{padding:8px 16px;border-radius:var(--r-sm);border:none;cursor:pointer;font-family:var(--font-body);font-size:.82rem;font-weight:600;transition:all .2s;white-space:nowrap;text-align:right;direction:rtl}
 .save-mix-btn{background:var(--green-main);color:#fff}.save-mix-btn:hover{background:var(--green-dark)}
 .clear-compare-btn{background:var(--bg);color:var(--text-secondary);border:1.5px solid var(--border)}.clear-compare-btn:hover{border-color:var(--danger);color:var(--danger)}
 .compare-table-wrap{overflow-x:auto}
@@ -361,15 +362,24 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
   .result-dark-top{gap:var(--sp-md);flex-wrap:wrap}
   .result-dark-grid{grid-template-columns:1fr 1fr}
   .result-dark-amount{font-size:2rem}
+  /* Compare: title on top, actions below */
+  .compare-header{flex-direction:column;align-items:stretch}
+  .compare-header h3{margin-bottom:var(--sp-sm)}
   .compare-actions{flex-direction:column;align-items:stretch}
   .mix-name-input{min-width:unset;width:100%}
+  .save-mix-btn,.clear-compare-btn{width:100%;text-align:right}
   .upsell-card{padding:var(--sp-md)}
-  .track-years-row,.amort-row{gap:4px}
+  /* Years/amort labels above buttons */
+  .track-years-row,.amort-row{flex-wrap:wrap;gap:4px}
+  .years-label,.amort-label{width:100%;margin-left:0;margin-bottom:2px}
   .yr,.am{padding:4px 8px;font-size:.72rem}
   .yr-manual{width:80px}
   .group-header{padding:var(--sp-md)}
   .group-body{padding:var(--sp-md) var(--sp-md) var(--sp-sm)}
-  .inflation-box{padding:var(--sp-sm) var(--sp-md)}
+  /* Inflation box: centered, no overflow */
+  .inflation-box{padding:var(--sp-sm) var(--sp-md);justify-content:center;overflow:hidden}
+  .inflation-display{min-width:0;overflow:hidden}
+  .inflation-display strong{font-size:1.2rem;overflow:hidden;text-overflow:ellipsis}
   .step2-top-row{flex-direction:column;align-items:stretch}
   .tr-result{min-width:80px}
   .breakdown-item{flex-direction:column;align-items:flex-start;gap:var(--sp-xs)}
@@ -412,12 +422,18 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
   .tr-result span{font-size:.68rem}
   .tr-result strong{font-size:.82rem}
   .compare-section{padding:var(--sp-md) var(--sp-sm)}
-  .compare-header{gap:var(--sp-sm)}
+  .compare-header{flex-direction:column;align-items:stretch;gap:var(--sp-sm)}
+  .compare-header h3{margin-bottom:4px}
+  .save-mix-btn,.clear-compare-btn{width:100%;text-align:right}
   .compare-table th,.compare-table td{padding:6px 8px;font-size:.75rem}
   .upsell-card{padding:var(--sp-sm) var(--sp-md);flex-wrap:wrap}
-  .inflation-box{padding:var(--sp-xs) var(--sp-sm)}
-  .inflation-display strong{font-size:1.1rem}
+  /* Inflation: always centered, never overflow */
+  .inflation-box{padding:var(--sp-xs) var(--sp-sm);justify-content:center;overflow:hidden}
+  .inflation-display{min-width:0}
+  .inflation-display strong{font-size:1rem}
   .adj-btn{width:28px;height:28px;font-size:.9rem}
+  /* Years/amort labels above buttons */
+  .years-label,.amort-label{width:100%;margin-left:0;margin-bottom:2px;display:block}
   .ss-inner{gap:var(--sp-xs);padding:0 var(--sp-sm)}
   .ss-val{font-size:.8rem}
   .ss-val.accent{font-size:.9rem}

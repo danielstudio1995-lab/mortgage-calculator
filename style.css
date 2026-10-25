@@ -43,6 +43,9 @@ body.has-sticky{padding-top:calc(var(--sticky-h) + var(--sp-md));}
 .ss-track-amt{font-family:var(--font-ui);font-size:.8rem;font-weight:700}
 .ss-remain .ss-val{color:var(--green-light)}
 .ss-remain .ss-val.over{color:#ff8a80}
+.ss-fixed-rule{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.ss-fixed-req{color:rgba(255,255,255,.85)}
+.ss-fixed-warn{font-size:.65rem;color:#ffb74d;white-space:nowrap;font-weight:700}
 
 /* TABS */
 .tabs-bar{display:flex;gap:var(--sp-sm);background:var(--surface);border-radius:var(--r-xl);padding:var(--sp-sm);margin-bottom:var(--sp-lg);box-shadow:var(--shadow);overflow-x:auto;scrollbar-width:none}

@@ -13,15 +13,25 @@ const fmt=n=>(isNaN(n)||n==null||n<=0)?'—':'₪'+Math.round(n).toLocaleString(
 const parseNum=s=>parseFloat(String(s).replace(/[₪,\s]/g,''))||0;
 const setText=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
 const formatInput=el=>{const v=parseNum(el.value);el.value=v>0?v.toLocaleString('he-IL'):'0';};
+// Format number input live (show commas while typing, preserve cursor)
+function liveFormat(el){
+  const raw=el.value.replace(/[^\d]/g,'');
+  if(!raw){el.value='';return;}
+  const n=parseInt(raw,10);
+  const pos=el.selectionStart,oldLen=el.value.length;
+  el.value=n.toLocaleString('he-IL');
+  // Restore cursor: offset by any added commas
+  const diff=el.value.length-oldLen;
+  try{el.setSelectionRange(pos+diff,pos+diff);}catch(e){}
+}
 
 function setSliderFill(s){
   if(!s)return;
   const min=parseFloat(s.min),max=parseFloat(s.max),val=parseFloat(s.value);
   const pct=Math.max(0,Math.min(100,((val-min)/(max-min))*100));
-  // RTL: thumb starts right, green fills from right toward left as value increases
-  // direction:rtl means pct=0→thumb on right, pct=100→thumb on left
-  // We want green on RIGHT side growing LEFT: grey[pct%] | green[100-pct%]
-  s.style.background=`linear-gradient(to right,#E2E2DC ${100-pct}%,#008B1E ${100-pct}%)`;
+  // RTL: green fills from right toward left. Clamp green stop to avoid track fully disappearing at 100%
+  const stop=Math.min(100-pct,99);
+  s.style.background=`linear-gradient(to right,#E2E2DC ${stop}%,#008B1E ${stop}%)`;
 }
 
 /* ══════════════════════════════════════
@@ -361,6 +371,20 @@ function updateStickySummary(allocated,monthly,breakdowns){
   setText('ssTotalAmt',fmt(STATE.totalMortgage));setText('ssMonthly',monthly>0?fmt(monthly):'—');
   const remain=STATE.totalMortgage-allocated,remainEl=document.getElementById('ssRemain');
   if(remainEl){remainEl.textContent=Math.abs(remain)<1000?'הוקצה הכל':(remain>0?fmt(remain):`יתר: ${fmt(Math.abs(remain))}`);remainEl.className='ss-val'+(remain<-1000?' over':'');}
+
+  // Fixed 1/3 rule — show required fixed amount and alert if below
+  const requiredFixed=Math.round(STATE.totalMortgage/3);
+  const fixedEl=document.getElementById('ssFixedRequired');
+  const fixedWarnEl=document.getElementById('ssFixedWarn');
+  const actualFixed=breakdowns.filter(b=>STATE.tracks[b.id]?.fixed).reduce((s,b)=>s+b.amt,0);
+  const fixedOk=actualFixed>=requiredFixed-1000;
+  if(fixedEl)fixedEl.textContent=fmt(requiredFixed);
+  if(fixedWarnEl){
+    fixedWarnEl.style.display=fixedOk?'none':'flex';
+    const shortBy=requiredFixed-actualFixed;
+    fixedWarnEl.textContent=`⚠️ קבועות נמוכות מ-1/3 — חסר ${fmt(shortBy)}`;
+  }
+
   const tracksEl=document.getElementById('ssTracks');
   if(tracksEl){tracksEl.innerHTML='';breakdowns.forEach(b=>{const chip=document.createElement('div');chip.className='ss-track-chip';chip.innerHTML=`<span class="ss-track-name" style="color:${b.color}">${TRACK_LABELS[b.id]||b.id}</span><span class="ss-track-amt">${fmt(b.amt)}</span>`;tracksEl.appendChild(chip);});}
 }
@@ -389,14 +413,14 @@ function renderCompareTable(){
     html+='</tr>';
   });
   const allIds=[...new Set(mixes.flatMap(m=>m.data.tracks.map(t=>t.id)))];
-  allIds.forEach(tid=>{html+=`<tr><td><em>${TRACK_LABELS[tid]||tid}</em></td>`;mixes.forEach(m=>{const t=m.data.tracks.find(t=>t.id===tid);html+=`<td>${t?`${fmt(t.amt)} | ${t.rate.toFixed(2)}% | ${Math.round(t.years)}שנ`:'—'}</td>`;});html+='</tr>';});
+  allIds.forEach(tid=>{html+=`<tr><td><em>${TRACK_LABELS[tid]||tid}</em></td>`;mixes.forEach(m=>{const t=m.data.tracks.find(t=>t.id===tid);html+=`<td>${t?`${fmt(t.amt)} | ${t.rate.toFixed(2)}% | ${Math.round(t.years)} שנ'`:'—'}</td>`;});html+='</tr>';});
   html+='</tbody></table>';wrap.innerHTML=html;
   wrap.querySelectorAll('.delete-mix-btn').forEach(btn=>btn.addEventListener('click',()=>{STATE.savedMixes=STATE.savedMixes.filter(m=>m.id!==parseInt(btn.dataset.mixId));renderCompareTable();}));
 }
 
 function bindNumSlider(inputId,sliderId,onChange){
   const inp=document.getElementById(inputId),sld=document.getElementById(sliderId);
-  if(inp){inp.addEventListener('input',()=>{const v=parseNum(inp.value);if(sld){sld.value=Math.min(v,parseFloat(sld.max));setSliderFill(sld);}onChange(v);});inp.addEventListener('blur',()=>formatInput(inp));}
+  if(inp){inp.addEventListener('input',()=>{liveFormat(inp);const v=parseNum(inp.value);if(sld){sld.value=Math.min(v,parseFloat(sld.max));setSliderFill(sld);}onChange(v);});inp.addEventListener('blur',()=>formatInput(inp));}
   if(sld){sld.addEventListener('input',()=>{const v=parseFloat(sld.value);if(inp)inp.value=Math.round(v).toLocaleString('he-IL');setSliderFill(sld);onChange(v);});setSliderFill(sld);}
 }
 
@@ -426,9 +450,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   // שדות עצמאיים
   const propEl=document.getElementById('propertyPrice'),propSld=document.getElementById('propertySlider');
   const eqEl=document.getElementById('equityAmount'),eqSld=document.getElementById('equitySlider');
-  if(propEl){propEl.addEventListener('input',()=>{STATE.propertyPrice=parseNum(propEl.value);updateStep1();});propEl.addEventListener('blur',()=>formatInput(propEl));}
+  if(propEl){propEl.addEventListener('input',()=>{liveFormat(propEl);STATE.propertyPrice=parseNum(propEl.value);updateStep1();});propEl.addEventListener('blur',()=>formatInput(propEl));}
   if(propSld){propSld.addEventListener('input',()=>{STATE.propertyPrice=parseFloat(propSld.value);if(propEl)propEl.value=Math.round(STATE.propertyPrice).toLocaleString('he-IL');setSliderFill(propSld);updateStep1();});setSliderFill(propSld);}
-  if(eqEl){eqEl.addEventListener('input',()=>{STATE.equityAmount=parseNum(eqEl.value);updateStep1();});eqEl.addEventListener('blur',()=>formatInput(eqEl));}
+  if(eqEl){eqEl.addEventListener('input',()=>{liveFormat(eqEl);STATE.equityAmount=parseNum(eqEl.value);updateStep1();});eqEl.addEventListener('blur',()=>formatInput(eqEl));}
   if(eqSld){eqSld.addEventListener('input',()=>{STATE.equityAmount=parseFloat(eqSld.value);if(eqEl)eqEl.value=Math.round(STATE.equityAmount).toLocaleString('he-IL');setSliderFill(eqSld);updateStep1();});setSliderFill(eqSld);}
 
   document.getElementById('goToStep2Btn')?.addEventListener('click',()=>{
@@ -466,7 +490,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const cb=card.querySelector('.track-enable');
     if(cb)cb.addEventListener('change',()=>{t.enabled=cb.checked;card.classList.toggle('enabled',t.enabled);recalcAllTracks();});
     const amtEl=card.querySelector('.amt-input');
-    if(amtEl){amtEl.addEventListener('input',()=>onAmtChange(id,parseNum(amtEl.value)));amtEl.addEventListener('blur',()=>formatInput(amtEl));}
+    if(amtEl){amtEl.addEventListener('input',()=>{liveFormat(amtEl);onAmtChange(id,parseNum(amtEl.value));});amtEl.addEventListener('blur',()=>formatInput(amtEl));}
     const pctSld=card.querySelector('.track-pct-slider');
     if(pctSld){pctSld.addEventListener('input',()=>onSliderChange(id,parseInt(pctSld.value)));setSliderFill(pctSld);}
     const rateSld=card.querySelector('.rate-slider');

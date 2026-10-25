@@ -20,6 +20,12 @@
     <div class="ss-divider"></div>
     <div class="ss-monthly"><span class="ss-label">החזר חודשי</span><span class="ss-val accent" id="ssMonthly">—</span></div>
     <div class="ss-remain"><span class="ss-label">נותר להקצות</span><span class="ss-val" id="ssRemain">—</span></div>
+    <div class="ss-divider"></div>
+    <div class="ss-fixed-rule">
+      <span class="ss-label">מינ׳ קבועות (1/3)</span>
+      <span class="ss-val ss-fixed-req" id="ssFixedRequired">—</span>
+      <span class="ss-fixed-warn" id="ssFixedWarn" style="display:none"></span>
+    </div>
   </div>
 </div>
 
@@ -234,7 +240,7 @@
             <div class="track-results" id="kalatzResults">
               <div class="tr-result tr-standard"><span>החזר חודשי התחלתי</span><strong id="kalatzMonthly">—</strong></div>
               <div class="tr-result tr-grace-row hidden" id="kalatz-grace-monthly"><span>החזר חודשי במהלך תקופת הגרייס (ריבית בלבד)</span><strong id="kalatzGraceMonthly">—</strong></div>
-              <div class="tr-result tr-grace-row hidden" id="kalatz-post-grace"><span>החזר חודשי לאחר תקופת הגרייס</span><strong id="kalatzPostGrace">—</strong></div>
+              <div class="tr-result tr-grace-row hidden" id="kalatz-post-grace"><span>החזר חודשי לאחר הגרייס (שפיצר)</span><strong id="kalatzPostGrace">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="kalatz-balloon-monthly"><span>החזר חודשי במהלך תקופת הבלון (ריבית בלבד)</span><strong id="kalatzBalloonMonthly">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="kalatz-post-balloon"><span>החזר לאחר סיום תקופת הבלון</span><strong id="kalatzPostBalloon">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="kalatzPer1">—</strong></div>
@@ -273,7 +279,7 @@
             <div class="track-results" id="katzResults">
               <div class="tr-result tr-standard"><span>החזר חודשי התחלתי</span><strong id="katzMonthly">—</strong></div>
               <div class="tr-result tr-grace-row hidden" id="katz-grace-monthly"><span>החזר חודשי במהלך תקופת הגרייס (ריבית בלבד)</span><strong id="katzGraceMonthly">—</strong></div>
-              <div class="tr-result tr-grace-row hidden" id="katz-post-grace"><span>החזר חודשי לאחר תקופת הגרייס</span><strong id="katzPostGrace">—</strong></div>
+              <div class="tr-result tr-grace-row hidden" id="katz-post-grace"><span>החזר חודשי לאחר הגרייס (שפיצר)</span><strong id="katzPostGrace">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="katz-balloon-monthly"><span>החזר חודשי במהלך תקופת הבלון (ריבית בלבד)</span><strong id="katzBalloonMonthly">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="katz-post-balloon"><span>החזר לאחר סיום תקופת הבלון</span><strong id="katzPostBalloon">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="katzPer1">—</strong></div>
@@ -356,7 +362,7 @@
             <div class="track-results" id="primeResults">
               <div class="tr-result tr-standard"><span>החזר חודשי התחלתי</span><strong id="primeMonthly">—</strong></div>
               <div class="tr-result tr-grace-row hidden" id="prime-grace-monthly"><span>החזר חודשי במהלך תקופת הגרייס (ריבית בלבד)</span><strong id="primeGraceMonthly">—</strong></div>
-              <div class="tr-result tr-grace-row hidden" id="prime-post-grace"><span>החזר חודשי לאחר תקופת הגרייס</span><strong id="primePostGrace">—</strong></div>
+              <div class="tr-result tr-grace-row hidden" id="prime-post-grace"><span>החזר חודשי לאחר הגרייס (שפיצר)</span><strong id="primePostGrace">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="prime-balloon-monthly"><span>החזר חודשי במהלך תקופת הבלון (ריבית בלבד)</span><strong id="primeBalloonMonthly">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="prime-post-balloon"><span>החזר לאחר סיום תקופת הבלון</span><strong id="primePostBalloon">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="primePer1">—</strong></div>
@@ -395,7 +401,7 @@
             <div class="track-results" id="makamResults">
               <div class="tr-result tr-standard"><span>החזר חודשי התחלתי</span><strong id="makamMonthly">—</strong></div>
               <div class="tr-result tr-grace-row hidden" id="makam-grace-monthly"><span>החזר חודשי במהלך תקופת הגרייס (ריבית בלבד)</span><strong id="makamGraceMonthly">—</strong></div>
-              <div class="tr-result tr-grace-row hidden" id="makam-post-grace"><span>החזר חודשי לאחר תקופת הגרייס</span><strong id="makamPostGrace">—</strong></div>
+              <div class="tr-result tr-grace-row hidden" id="makam-post-grace"><span>החזר חודשי לאחר הגרייס (שפיצר)</span><strong id="makamPostGrace">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="makam-balloon-monthly"><span>החזר חודשי במהלך תקופת הבלון (ריבית בלבד)</span><strong id="makamBalloonMonthly">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="makam-post-balloon"><span>החזר לאחר סיום תקופת הבלון</span><strong id="makamPostBalloon">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="makamPer1">—</strong></div>
@@ -435,7 +441,7 @@
             <div class="track-results" id="mczResults">
               <div class="tr-result tr-standard"><span>החזר חודשי התחלתי</span><strong id="mczMonthly">—</strong></div>
               <div class="tr-result tr-grace-row hidden" id="mcz-grace-monthly"><span>החזר חודשי במהלך תקופת הגרייס (ריבית בלבד)</span><strong id="mczGraceMonthly">—</strong></div>
-              <div class="tr-result tr-grace-row hidden" id="mcz-post-grace"><span>החזר חודשי לאחר תקופת הגרייס</span><strong id="mczPostGrace">—</strong></div>
+              <div class="tr-result tr-grace-row hidden" id="mcz-post-grace"><span>החזר חודשי לאחר הגרייס (שפיצר)</span><strong id="mczPostGrace">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="mcz-balloon-monthly"><span>החזר חודשי במהלך תקופת הבלון (ריבית בלבד)</span><strong id="mczBalloonMonthly">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="mcz-post-balloon"><span>החזר לאחר סיום תקופת הבלון</span><strong id="mczPostBalloon">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="mczPer1">—</strong></div>
@@ -475,7 +481,7 @@
             <div class="track-results" id="mlczResults">
               <div class="tr-result tr-standard"><span>החזר חודשי התחלתי</span><strong id="mlczMonthly">—</strong></div>
               <div class="tr-result tr-grace-row hidden" id="mlcz-grace-monthly"><span>החזר חודשי במהלך תקופת הגרייס (ריבית בלבד)</span><strong id="mlczGraceMonthly">—</strong></div>
-              <div class="tr-result tr-grace-row hidden" id="mlcz-post-grace"><span>החזר חודשי לאחר תקופת הגרייס</span><strong id="mlczPostGrace">—</strong></div>
+              <div class="tr-result tr-grace-row hidden" id="mlcz-post-grace"><span>החזר חודשי לאחר הגרייס (שפיצר)</span><strong id="mlczPostGrace">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="mlcz-balloon-monthly"><span>החזר חודשי במהלך תקופת הבלון (ריבית בלבד)</span><strong id="mlczBalloonMonthly">—</strong></div>
               <div class="tr-result tr-balloon-row hidden" id="mlcz-post-balloon"><span>החזר לאחר סיום תקופת הבלון</span><strong id="mlczPostBalloon">—</strong></div>
               <div class="tr-result"><span>החזר לשקל</span><strong id="mlczPer1">—</strong></div>

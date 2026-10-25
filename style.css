@@ -1,7 +1,7 @@
 :root{
   --green-light:#AEE27B;--green-main:#008B1E;--green-dark:#024F25;
   --cream:#F9EDD1;--gold:#D3A742;
-  --bg:#F4F4F2;--surface:#FFFFFF;--border:#E2E2DC;
+  --bg:transparent;--surface:#FFFFFF;--border:#E2E2DC;
   --text-primary:#0F1A0F;--text-secondary:#4A5C4A;--text-muted:#8A9E8A;
   --danger:#C0392B;--danger-bg:#fef2f2;--danger-border:#fecaca;
   --warning-bg:#FFF8E7;--warning-border:#D3A742;
@@ -12,8 +12,8 @@
   --sticky-h:64px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:16px}
-body{font-family:var(--font-body);background:var(--bg);color:var(--text-primary);direction:rtl;min-height:100vh;padding:var(--sp-md);max-width:900px;margin:0 auto}
+html{font-size:16px;background:transparent;}
+body{font-family:var(--font-body);background:transparent;color:var(--text-primary);direction:rtl;min-height:100vh;padding:var(--sp-md);max-width:900px;margin:0 auto}
 body.has-sticky{padding-top:calc(var(--sticky-h) + var(--sp-md));}
 
 /* STICKY SUMMARY */

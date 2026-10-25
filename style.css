@@ -252,7 +252,7 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 .yr,.am{padding:4px 10px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:var(--font-body);font-size:.78rem;font-weight:600;color:var(--text-primary);transition:all .15s;white-space:nowrap}
 .yr:hover,.am:hover{border-color:var(--green-main);color:var(--green-main)}
 .yr.active,.am.active{background:var(--green-main);border-color:var(--green-main);color:#fff}
-.yr-manual,.mo-manual{width:50px;padding:4px 6px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);font-family:var(--font-ui);font-size:.78rem;font-weight:600;color:var(--text-primary);text-align:center;outline:none;direction:ltr;transition:border-color .15s}
+.yr-manual,.mo-manual{width:90px;padding:4px 8px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--surface);font-family:var(--font-ui);font-size:.78rem;font-weight:600;color:var(--text-primary);text-align:center;outline:none;direction:ltr;transition:border-color .15s}
 .yr-manual:focus,.mo-manual:focus{border-color:var(--green-main)}
 .yr-manual::-webkit-inner-spin-button,.mo-manual::-webkit-inner-spin-button{-webkit-appearance:none}
 .mo-label{font-size:.72rem;color:var(--text-muted)}
@@ -395,6 +395,7 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 
 /* ── הכנסה ידנית hint ── */
 .yr-manual-hint{font-size:.65rem;color:var(--text-secondary);white-space:nowrap;margin-right:4px;}
+.yr-manual::placeholder{font-size:.65rem;font-weight:400;color:var(--text-muted);direction:rtl;}
 
 /* ── PDF Download button ── */
 .pdf-download-wrap{display:flex;justify-content:center;margin:var(--sp-xl) 0 var(--sp-md);}

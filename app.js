@@ -135,8 +135,13 @@ function computeTrack(id,t,totalM,cpi){
       const grownP=P*Math.pow(1+cpi/100,elapsed);
       peak=spitzer(grownP,effRate,Math.max(remainYrs-elapsed,1/12));
       total=gracePmt*graceMo+spitzerTotal(P,effRate,remainYrs);
+    }else if(t.variable){
+      // משתנה לא צמוד: שפיצר על יתרת התקופה, שיא = ריבית +2% (תרחיש עליה)
+      postGrace=spitzer(P,rate,remainYrs);
+      peak=spitzer(P,rate+2,remainYrs);
+      total=gracePmt*graceMo+spitzerTotal(P,rate,remainYrs);
     }else{
-      // לא צמוד (קבוע או משתנה): שפיצר על יתרת התקופה, שיא = אותו תשלום
+      // קבוע לא צמוד: שפיצר על יתרת התקופה, שיא = אותו תשלום (ריבית לא משתנה)
       postGrace=spitzer(P,rate,remainYrs);
       peak=postGrace;
       total=gracePmt*graceMo+spitzerTotal(P,rate,remainYrs);
@@ -293,14 +298,14 @@ function onAmtChange(id,amt){
 
 function recalcAllTracks(){
   const totalM=STATE.totalMortgage,cpi=STATE.inflationRate;
-  let totalMonthly=0,totalPeak=0,totalInterest=0,grandTotal=0,fixedAmt=0,allocatedAmt=0,activeCount=0;
+  let totalMonthly=0,totalPeak=0,totalInterest=0,grandTotal=0,fixedAmt=0,allocatedAmt=0,activeCount=0,hasCpi=false;
   const breakdowns=[];
 
   Object.entries(STATE.tracks).forEach(([id,t],i)=>{
     if(!t.enabled)return;
     const res=computeTrack(id,t,totalM,cpi);if(!res||res.P<=0)return;
     activeCount++;allocatedAmt+=res.P;
-    totalMonthly+=res.initial;totalPeak+=res.peak;
+    totalMonthly+=res.initial;if(t.cpi){totalPeak+=res.peak;hasCpi=true;}
     totalInterest+=res.interest;grandTotal+=res.total;
     if(t.fixed)fixedAmt+=res.P;
 
@@ -318,9 +323,12 @@ function recalcAllTracks(){
     const standardRow=document.querySelector(`#${id}Results .tr-standard`);
     const peakRow=document.querySelector(`#${id}Results .highlight`);
 
+    // שיא מוצג רק במסלולים צמודים (CPI)
+    const showPeak=t.cpi===true;
+
     if(t.amort==='grace'){
       if(standardRow)standardRow.classList.add('hidden');
-      if(peakRow)peakRow.classList.remove('hidden');
+      if(peakRow){showPeak?peakRow.classList.remove('hidden'):peakRow.classList.add('hidden');}
       if(stdRow){stdRow.classList.remove('hidden');setText(`${id}GraceMonthly`,fmt(res.graceOnly));}
       if(postGraceRow){postGraceRow.classList.remove('hidden');setText(`${id}PostGrace`,fmt(res.postGrace));}
       if(balloonMoRow)balloonMoRow.classList.add('hidden');
@@ -335,7 +343,7 @@ function recalcAllTracks(){
       if(balloonMoRow){balloonMoRow.classList.remove('hidden');setText(`${id}BalloonMonthly`,fmt(res.initial));}
     }else{
       if(standardRow)standardRow.classList.remove('hidden');
-      if(peakRow)peakRow.classList.remove('hidden');
+      if(peakRow){showPeak?peakRow.classList.remove('hidden'):peakRow.classList.add('hidden');}
       if(stdRow)stdRow.classList.add('hidden');
       if(postGraceRow)postGraceRow.classList.add('hidden');
       if(balloonMoRow)balloonMoRow.classList.add('hidden');
@@ -346,7 +354,7 @@ function recalcAllTracks(){
     if(t.amort==='balloon'){if(beVal)beVal.textContent=fmt(res.balloonEnd);if(beRow)beRow.classList.remove('hidden');}
     else{if(beRow)beRow.classList.add('hidden');}
 
-    breakdowns.push({id,amt:res.P,initial:res.initial,peak:res.peak,total:res.total,per1:res.per1,color:TRACK_COLORS[i%TRACK_COLORS.length]});
+    breakdowns.push({id,amt:res.P,initial:res.initial,peak:res.peak,showPeak:t.cpi===true,total:res.total,per1:res.per1,color:TRACK_COLORS[i%TRACK_COLORS.length]});
   });
 
   const fixedPct=totalM>0?Math.round(fixedAmt/totalM*100):0,fixedOk=fixedAmt>=totalM/3;
@@ -364,7 +372,10 @@ function recalcAllTracks(){
 
   setText('totalMonthly',activeCount?fmt(totalMonthly):'—');
   setText('totalMonthlyInitial',activeCount?fmt(totalMonthly):'—');
-  setText('totalPeak',activeCount?fmt(totalPeak):'—');
+  setText('totalPeak',activeCount&&hasCpi?fmt(totalPeak):'—');
+  // הצג/הסתר שורת שיא לפי קיום מסלולים צמודים
+  const peakSummaryRow=document.getElementById('peakSummaryRow');
+  if(peakSummaryRow){peakSummaryRow.style.display=hasCpi?'':'none';}
   setText('totalInterestCost',activeCount?fmt(totalInterest):'—');
   setText('grandTotal',activeCount?fmt(grandTotal):'—');
   setText('activeTracks',`${activeCount} מסלולים פעילים`);
@@ -377,7 +388,7 @@ function renderBreakdown(items){
   const list=document.getElementById('breakdownList'),bar=document.getElementById('mixBar');
   if(!list||!bar)return;list.innerHTML='';bar.innerHTML='';
   items.forEach(item=>{
-    const hasPeak=item.peak>item.initial*1.005;
+    const hasPeak=item.showPeak&&item.peak>item.initial*1.005;
     const div=document.createElement('div');div.className='breakdown-item';
     div.innerHTML=`<div class="breakdown-item-name"><span class="track-dot" style="background:${item.color}"></span><div><div class="breakdown-name">${TRACK_LABELS[item.id]||item.id}</div><div class="breakdown-detail">${fmt(item.amt)}</div></div></div><div class="breakdown-figures"><span class="breakdown-monthly">${fmt(item.initial)}/חודש</span>${hasPeak?`<span class="breakdown-peak">שיא: ${fmt(item.peak)}</span>`:''}<span class="breakdown-total">סך: ${fmt(item.total)}</span></div>`;
     list.appendChild(div);
@@ -414,12 +425,14 @@ function updateStickySummary(allocated,monthly,breakdowns){
 function getCurrentMixSnapshot(){
   const totalM=STATE.totalMortgage,cpi=STATE.inflationRate;
   let totalMonthly=0,totalPeak=0,totalInterest=0,grandTotal=0;const tracks=[];
+  let hasCpi=false;
   Object.entries(STATE.tracks).forEach(([id,t])=>{
     if(!t.enabled)return;const res=computeTrack(id,t,totalM,cpi);if(!res||res.P<=0)return;
-    totalMonthly+=res.initial;totalPeak+=res.peak;totalInterest+=res.interest;grandTotal+=res.total;
+    totalMonthly+=res.initial;if(t.cpi)totalPeak+=res.peak;totalInterest+=res.interest;grandTotal+=res.total;
+    if(t.cpi)hasCpi=true;
     tracks.push({id,amt:res.P,rate:t.rate,years:t.years,monthly:res.initial,total:res.total,per1:res.per1});
   });
-  return{totalMortgage:totalM,totalMonthly,totalPeak,totalInterest,grandTotal,tracks};
+  return{totalMortgage:totalM,totalMonthly,totalPeak,totalInterest,grandTotal,hasCpi,tracks};
 }
 
 function renderCompareTable(){
@@ -429,7 +442,9 @@ function renderCompareTable(){
   let html='<table class="compare-table"><thead><tr><th>קטגוריה</th>';
   mixes.forEach(m=>html+=`<th>${m.name} <button class="delete-mix-btn" data-mix-id="${m.id}">✕</button></th>`);
   html+='</tr></thead><tbody>';
-  [['סכום משכנתא','totalMortgage',fmt],['החזר חודשי התחלתי','totalMonthly',fmt,'bm'],['החזר חודשי בשיא','totalPeak',fmt],['עלות ריבית','totalInterest',fmt],['סך החזר','grandTotal',fmt,'bt']].forEach(([label,key,fn,bk])=>{
+  const anyHasCpi=mixes.some(m=>m.data.hasCpi);
+  const compareRows=[['סכום משכנתא','totalMortgage',fmt],['החזר חודשי התחלתי','totalMonthly',fmt,'bm'],...(anyHasCpi?[['החזר חודשי בשיא (צמוד)','totalPeak',fmt]]:[]),['עלות ריבית','totalInterest',fmt],['סך החזר','grandTotal',fmt,'bt']];
+  compareRows.forEach(([label,key,fn,bk])=>{
     html+=`<tr><td><strong>${label}</strong></td>`;
     mixes.forEach(m=>{const v=m.data[key],ib=bk&&((bk==='bm'&&v===bm)||(bk==='bt'&&v===bt));html+=`<td class="${ib?'best':''}">${fn(v)}${ib?' ⭐':''}</td>`;});
     html+='</tr>';
@@ -575,14 +590,15 @@ function buildPrintSection(){
 
   // Summary boxes
   const monthly=document.getElementById('totalMonthlyInitial')?.textContent||'—';
-  const peak=document.getElementById('totalPeak')?.textContent||'—';
   const total=document.getElementById('grandTotal')?.textContent||'—';
   const mortgage=STATE.totalMortgage>0?fmt(STATE.totalMortgage):'—';
+  const hasCpiTracks=Object.values(STATE.tracks).some(t=>t.enabled&&t.cpi);
+  const peak=hasCpiTracks?(document.getElementById('totalPeak')?.textContent||'—'):null;
 
   const summaryHtml=`<div class="print-summary-row">
     <div class="print-summary-box"><span>סכום משכנתא</span><strong>${mortgage}</strong></div>
     <div class="print-summary-box"><span>החזר חודשי התחלתי</span><strong>${monthly}</strong></div>
-    <div class="print-summary-box"><span>החזר חודשי בשיא</span><strong>${peak}</strong></div>
+    ${peak?`<div class="print-summary-box"><span>החזר חודשי בשיא (צמוד)</span><strong>${peak}</strong></div>`:''}
     <div class="print-summary-box"><span>סך החזר כולל</span><strong>${total}</strong></div>
   </div>`;
   body.insertAdjacentHTML('beforeend',summaryHtml);
@@ -599,7 +615,7 @@ function buildPrintSection(){
       <div class="print-track-name">${TRACK_NAMES_PDF[id]||id} — ${fmt(res.P)} ₪ · ${t.years} שנים · ${t.rate.toFixed(2)}% · ${amortLabel}</div>
       <div class="print-track-grid">
         <div class="print-track-item"><span>החזר התחלתי</span><strong>${fmt(res.initial)} ₪</strong></div>
-        <div class="print-track-item"><span>החזר שיא</span><strong>${fmt(res.peak)} ₪</strong></div>
+        ${t.cpi?`<div class="print-track-item"><span>החזר שיא</span><strong>${fmt(res.peak)} ₪</strong></div>`:''}
         <div class="print-track-item"><span>סך הכל</span><strong>${fmt(res.total)} ₪</strong></div>
       </div>
     </div>`;

@@ -109,13 +109,13 @@ body.has-sticky{padding-top:calc(var(--sticky-h) + 12px + var(--sp-lg));}
 .field-hint{font-size:.78rem;color:var(--green-dark);font-weight:600;min-height:1.2em;margin-top:2px}
 
 /* INPUTS */
-.input-wrap{display:flex;align-items:center;gap:var(--sp-sm);border:2px solid var(--border);border-radius:var(--r-md);padding:var(--sp-sm) var(--sp-md);background:var(--surface);transition:border-color .2s}
+.input-wrap{display:flex;align-items:center;gap:var(--sp-sm);border:2px solid var(--border);border-radius:var(--r-md);padding:var(--sp-sm) var(--sp-md);background:var(--surface);transition:border-color .2s;width:100%;box-sizing:border-box;overflow:hidden;min-width:0}
 .input-wrap:focus-within{border-color:var(--green-main)}
 .input-wrap.large{padding:var(--sp-md) var(--sp-lg)}
 .input-wrap.compact{padding:6px 10px}
 .input-wrap.primary-driver{border-color:var(--green-main);background:#f0faf0}
 .currency-sign{font-size:1rem;font-weight:700;color:var(--green-dark);white-space:nowrap}
-.num-input{flex:1;border:none;outline:none;font-family:var(--font-ui);font-size:1rem;font-weight:600;color:var(--text-primary);background:transparent;text-align:left;direction:ltr}
+.num-input{flex:1;min-width:0;width:0;border:none;outline:none;font-family:var(--font-ui);font-size:1rem;font-weight:600;color:var(--text-primary);background:transparent;text-align:left;direction:ltr}
 .num-input.large{font-size:1.4rem;font-weight:700}
 input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:none}
 

@@ -562,5 +562,18 @@
 </div>
 
 <script src="app.js"></script>
+
+<script>
+  // Auto-resize: send document height to parent Webflow page
+  function sendHeight() {
+    const h = document.documentElement.scrollHeight;
+    window.parent.postMessage({ type: 'mortgageCalcHeight', height: h }, '*');
+  }
+  // Send on load, on resize, and whenever DOM changes
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
+  const ro = new ResizeObserver(sendHeight);
+  ro.observe(document.body);
+</script>
 </body>
 </html>

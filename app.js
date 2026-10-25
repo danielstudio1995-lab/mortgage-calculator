@@ -122,13 +122,27 @@ function computeTrack(id,t,totalM,cpi){
     balloonEnd=P;
     per1=P>0?total/P:0;
   }else if(t.amort==='grace'){
-    const g=gracePayments(P,rate,years,graceMo);
-    initial=g.grace;
-    peak=g.post; // אחרי גרייס — גבוה יותר
-    total=g.total;
+    const remainYrs=Math.max((Math.round(years*12)-graceMo)/12, 1/12);
+    const gracePmt=P*(rate/100/12); // ריבית בלבד בתקופת הגרייס
+    graceOnly=gracePmt;
+
+    if(t.cpi){
+      // צמוד מדד: חישוב שפיצר על יתרת התקופה עם ריבית אפקטיבית (נומינלי + מדד)
+      const effRate=rate+cpi;
+      postGrace=spitzer(P,effRate,remainYrs);
+      // שיא: קרן גדלה לפי מדד (עד 10 שנה מתחילת השפיצר)
+      const elapsed=Math.min(10,remainYrs);
+      const grownP=P*Math.pow(1+cpi/100,elapsed);
+      peak=spitzer(grownP,effRate,Math.max(remainYrs-elapsed,1/12));
+      total=gracePmt*graceMo+spitzerTotal(P,effRate,remainYrs);
+    }else{
+      // לא צמוד (קבוע או משתנה): שפיצר על יתרת התקופה, שיא = אותו תשלום
+      postGrace=spitzer(P,rate,remainYrs);
+      peak=postGrace;
+      total=gracePmt*graceMo+spitzerTotal(P,rate,remainYrs);
+    }
+    initial=gracePmt;
     per1=P>0?total/P:0;
-    graceOnly=g.grace;
-    postGrace=g.post;
   }else{
     // שפיצר
     if(t.cpi){

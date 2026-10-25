@@ -13,7 +13,7 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;background:transparent;}
-body{font-family:var(--font-body);background:transparent;color:var(--text-primary);direction:rtl;min-height:100vh;padding:var(--sp-md);max-width:900px;margin:0 auto}
+body{font-family:var(--font-body);background:transparent;color:var(--text-primary);direction:rtl;padding:var(--sp-md);max-width:900px;margin:0 auto}
 body.has-sticky{padding-top:calc(var(--sticky-h) + var(--sp-md));}
 
 /* STICKY SUMMARY */
@@ -345,16 +345,95 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 #modalBody{font-size:.85rem;color:var(--text-secondary);line-height:1.7}
 .disclaimer{font-size:.72rem;color:var(--text-muted);line-height:1.6;margin-bottom:var(--sp-sm)}
 
-@media(max-width:480px){
+/* ── MOBILE: tablet ── */
+@media(max-width:640px){
   body{padding:var(--sp-sm)}
-  .card{padding:var(--sp-lg) var(--sp-md)}
-  .result-card,.result-dark-card{padding:var(--sp-lg) var(--sp-md)}
-  .track-header{padding:var(--sp-sm) var(--sp-md)}
-  .track-body{padding:var(--sp-md)}
-  .slider-row{grid-template-columns:72px 52px 1fr;gap:var(--sp-xs)}
-  .result-dark-grid{grid-template-columns:1fr}
+  .card{padding:var(--sp-md)}
+  .page-title{font-size:1.6rem}
+  .tabs-bar{gap:4px;padding:6px}
+  .tab{min-width:80px;padding:var(--sp-sm) 6px}
+  .tab-label{font-size:.75rem}
+  .tab-sub{display:none}
+  .track-header{padding:var(--sp-sm) var(--sp-md);flex-wrap:wrap;gap:6px}
+  .track-body{padding:var(--sp-md) var(--sp-md) var(--sp-lg)}
+  .slider-row{grid-template-columns:64px 48px 1fr;gap:6px}
+  .result-dark-card{padding:var(--sp-lg) var(--sp-md)}
+  .result-dark-top{gap:var(--sp-md);flex-wrap:wrap}
+  .result-dark-grid{grid-template-columns:1fr 1fr}
+  .result-dark-amount{font-size:2rem}
   .compare-actions{flex-direction:column;align-items:stretch}
-  .ss-inner{gap:var(--sp-xs)}
+  .mix-name-input{min-width:unset;width:100%}
+  .upsell-card{padding:var(--sp-md)}
+  .track-years-row,.amort-row{gap:4px}
+  .yr,.am{padding:4px 8px;font-size:.72rem}
+  .yr-manual{width:80px}
+  .group-header{padding:var(--sp-md)}
+  .group-body{padding:var(--sp-md) var(--sp-md) var(--sp-sm)}
+  .inflation-box{padding:var(--sp-sm) var(--sp-md)}
+  .step2-top-row{flex-direction:column;align-items:stretch}
+  .tr-result{min-width:80px}
+  .breakdown-item{flex-direction:column;align-items:flex-start;gap:var(--sp-xs)}
+  .breakdown-figures{flex-wrap:wrap;gap:var(--sp-sm)}
+  .ss-fixed-rule{display:none}
+}
+
+/* ── MOBILE: phone ── */
+@media(max-width:480px){
+  body{padding:8px}
+  .card{padding:var(--sp-md) var(--sp-sm);border-radius:var(--r-lg)}
+  .page-title{font-size:1.4rem}
+  .page-sub{font-size:.85rem}
+  .tabs-bar{border-radius:var(--r-lg);padding:4px;gap:3px}
+  .tab{min-width:60px;padding:8px 4px}
+  .tab-label{font-size:.68rem}
+  .tab-icon{font-size:1rem}
+  .track-header{padding:10px var(--sp-sm)}
+  .track-name{font-size:.85rem}
+  .track-tag{font-size:.6rem;padding:2px 7px}
+  .track-body{padding:var(--sp-sm)}
+  .slider-row{grid-template-columns:60px 44px 1fr;gap:4px}
+  .slider-row label{font-size:.7rem}
+  .slider-val{font-size:.78rem}
+  .result-dark-card{padding:var(--sp-md) var(--sp-sm);border-radius:var(--r-lg)}
+  .result-dark-grid{grid-template-columns:1fr 1fr;gap:var(--sp-sm)}
+  .result-dark-box{padding:var(--sp-sm)}
+  .result-dark-box strong{font-size:.95rem}
+  .result-dark-amount{font-size:1.75rem}
+  .result-dark-icon{width:44px;height:44px;min-width:44px;font-size:1.3rem}
+  .result-dark-top{gap:var(--sp-sm)}
+  .group-header{padding:var(--sp-sm) var(--sp-md);gap:var(--sp-sm)}
+  .group-title{font-size:.9rem}
+  .group-body{padding:var(--sp-sm)}
+  .yr,.am{padding:3px 7px;font-size:.7rem}
+  .yr-manual{width:72px;font-size:.7rem}
+  .track-years-row{gap:3px}
+  .amort-row{gap:3px}
+  .tr-result{min-width:70px;padding:var(--sp-xs) var(--sp-sm)}
+  .tr-result span{font-size:.68rem}
+  .tr-result strong{font-size:.82rem}
+  .compare-section{padding:var(--sp-md) var(--sp-sm)}
+  .compare-header{gap:var(--sp-sm)}
+  .compare-table th,.compare-table td{padding:6px 8px;font-size:.75rem}
+  .upsell-card{padding:var(--sp-sm) var(--sp-md);flex-wrap:wrap}
+  .inflation-box{padding:var(--sp-xs) var(--sp-sm)}
+  .inflation-display strong{font-size:1.1rem}
+  .adj-btn{width:28px;height:28px;font-size:.9rem}
+  .ss-inner{gap:var(--sp-xs);padding:0 var(--sp-sm)}
+  .ss-val{font-size:.8rem}
+  .ss-val.accent{font-size:.9rem}
+  .sticky-summary{height:52px}
+  .pdf-btn{padding:10px 20px;font-size:.85rem}
+  .page-badge{font-size:.6rem}
+  .fixed-track-rule{font-size:.72rem}
+  .card-title{font-size:.95rem}
+  .input-wrap.large{padding:var(--sp-sm) var(--sp-md)}
+  .num-input.large{font-size:1.1rem}
+  .dual-inputs{flex-direction:column}
+  .swap-btn{align-self:center;margin-top:0}
+  .purchase-grid{grid-template-columns:1fr 1fr}
+  .purchase-icon{font-size:1.4rem}
+  .purchase-name{font-size:.8rem}
+  .grace-input,.balloon-input{flex-wrap:wrap;gap:6px}
 }
 
 /* LTV STATUS */

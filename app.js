@@ -115,10 +115,10 @@ function computeTrack(id,t,totalM,cpi){
       per1=P>0?total/P:0;
     }
   }else if(t.amort==='balloon'){
-    const b=balloonPayments(P,rate,years,balloonMo);
-    initial=b.balloon;  // ריבית בלבד בתקופת הבלון
-    peak=b.post;        // שפיצר אחרי תקופת הבלון
-    total=b.total;
+    // בלון: ריבית בלבד לכל התקופה, קרן מוחזרת בסוף בתשלום אחד
+    initial=balloonMonthly(P,rate);
+    peak=initial; // אין שינוי — ריבית קבועה לאורך כל הדרך
+    total=balloonTotal(P,rate,years);
     balloonEnd=P;
     per1=P>0?total/P:0;
   }else if(t.amort==='grace'){
@@ -302,21 +302,26 @@ function recalcAllTracks(){
     const balloonMoRow=document.getElementById(`${id}-balloon-monthly`);
     const postBalloonRow=document.getElementById(`${id}-post-balloon`);
     const standardRow=document.querySelector(`#${id}Results .tr-standard`);
+    const peakRow=document.querySelector(`#${id}Results .highlight`);
 
     if(t.amort==='grace'){
       if(standardRow)standardRow.classList.add('hidden');
+      if(peakRow)peakRow.classList.remove('hidden');
       if(stdRow){stdRow.classList.remove('hidden');setText(`${id}GraceMonthly`,fmt(res.graceOnly));}
       if(postGraceRow){postGraceRow.classList.remove('hidden');setText(`${id}PostGrace`,fmt(res.postGrace));}
       if(balloonMoRow)balloonMoRow.classList.add('hidden');
       if(postBalloonRow)postBalloonRow.classList.add('hidden');
     }else if(t.amort==='balloon'){
+      // בלון: 4 חלונות בלבד — החזר בתקופה, בסוף תקופה, לשקל, סך הכל
       if(standardRow)standardRow.classList.add('hidden');
+      if(peakRow)peakRow.classList.add('hidden');   // אין "שיא" בבלון
       if(stdRow)stdRow.classList.add('hidden');
       if(postGraceRow)postGraceRow.classList.add('hidden');
+      if(postBalloonRow)postBalloonRow.classList.add('hidden');
       if(balloonMoRow){balloonMoRow.classList.remove('hidden');setText(`${id}BalloonMonthly`,fmt(res.initial));}
-      if(postBalloonRow){postBalloonRow.classList.remove('hidden');setText(`${id}PostBalloon`,fmt(res.peak));}
     }else{
       if(standardRow)standardRow.classList.remove('hidden');
+      if(peakRow)peakRow.classList.remove('hidden');
       if(stdRow)stdRow.classList.add('hidden');
       if(postGraceRow)postGraceRow.classList.add('hidden');
       if(balloonMoRow)balloonMoRow.classList.add('hidden');

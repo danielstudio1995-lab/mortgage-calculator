@@ -566,18 +566,17 @@
 <script>
   // Auto-resize: send content height to parent Webflow page
   function sendHeight() {
-    const active = document.querySelector('.page.active') || document.body;
-    const h = active.scrollHeight || active.offsetHeight;
-    window.parent.postMessage({ type: 'mortgageCalcHeight', height: Math.ceil(h) + 80 }, '*');
+    // Measure the full document content height, not just the active page
+    document.body.style.overflow = 'visible';
+    const h = document.body.scrollHeight;
+    window.parent.postMessage({ type: 'mortgageCalcHeight', height: Math.ceil(h) + 60 }, '*');
   }
+  let sendTimer;
+  function debouncedSend() { clearTimeout(sendTimer); sendTimer = setTimeout(sendHeight, 100); }
   window.addEventListener('load', sendHeight);
-  window.addEventListener('resize', sendHeight);
-  // Watch only visible page containers, not body (avoids iframe growth loop)
-  const ro = new ResizeObserver(sendHeight);
-  ['step1','step2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) ro.observe(el);
-  });
+  window.addEventListener('resize', debouncedSend);
+  const ro = new ResizeObserver(debouncedSend);
+  ['step1','step2'].forEach(id => { const el = document.getElementById(id); if (el) ro.observe(el); });
 </script>
 </body>
 </html>

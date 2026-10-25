@@ -82,7 +82,7 @@ function computeTrack(id,t,totalM,cpi){
   const P=t.amt>0?t.amt:totalM*(t.pct/100);
   if(P<=0||!t.enabled)return null;
   const rate=t.rate||5,years=t.years||30,graceMo=t.graceMo||12;
-  let initial=0,peak=0,total=0,balloonEnd=0,per1=0;
+  let initial=0,peak=0,total=0,balloonEnd=0,per1=0,graceOnly=0,postGrace=0;
 
   if(t.amort==='keren'){
     if(t.cpi){
@@ -107,6 +107,8 @@ function computeTrack(id,t,totalM,cpi){
     peak=g.post; // אחרי גרייס — גבוה יותר
     total=g.total;
     per1=P>0?total/P:0;
+    graceOnly=g.grace;
+    postGrace=g.post;
   }else{
     // שפיצר
     if(t.cpi){
@@ -127,7 +129,7 @@ function computeTrack(id,t,totalM,cpi){
       per1=P>0?total/P:0;
     }
   }
-  return{P,initial,peak,total,interest:total-P,balloonEnd,per1};
+  return{P,initial,peak,total,interest:total-P,balloonEnd,per1,graceOnly,postGrace};
 }
 
 /* ── מצב ── */
@@ -156,8 +158,8 @@ const TRACK_INFO={
   zakaut:{title:'הלוואת זכאות',body:'הלוואה מטעם המדינה בריבית קבועה צמודה. ריביות אוגוסט 2026: עד 5 שנים 3%, עד 10 שנים 2.27%, עד 15 שנים 2.37%, עד 20 שנים 2.48%, עד 25 שנים 2.57%, מעל 25 שנים 2.72%.'},
   prime: {title:'פריים',body:'ריבית = ריבית בנק ישראל + 1.5%. גמיש לפירעון מוקדם. ריבית משתנה — לא צמודה למדד.'},
   makam: {title:'מק"מ — משתנה שנתי',body:'הריבית מתעדכנת מדי שנה לפי תשואת המק"מ של בנק ישראל. לא צמוד מדד.'},
-  mcz:   {title:'משתנה צמודת מדד (מ"צ)',body:'ריבית מתעדכנת בכל תכיפות שינוי עם הצמדה למדד. טווח 2%–5%.'},
-  mlcz:  {title:'משתנה לא צמודה (מל"צ)',body:'ריבית מתעדכנת בכל תכיפות שינוי ללא הצמדה. טווח 3.5%–6.5%.'},
+  mcz:   {title:'משתנה צמודת מדד (מ"צ)',body:'ריבית מתעדכנת בכל תכיפות שינוי עם הצמדה למדד.'},
+  mlcz:  {title:'משתנה לא צמודה (מל"צ)',body:'ריבית מתעדכנת בכל תכיפות שינוי ללא הצמדה.'},
 };
 
 /* ── עמוד 1 ── */
@@ -275,10 +277,38 @@ function recalcAllTracks(){
     totalInterest+=res.interest;grandTotal+=res.total;
     if(t.fixed)fixedAmt+=res.P;
 
+    // Standard result
     setText(`${id}Monthly`,fmt(res.initial));
     setText(`${id}Per1`,res.per1>0?res.per1.toFixed(2):'—');
     setText(`${id}Peak`,fmt(res.peak));
     setText(`${id}Total`,fmt(res.total));
+
+    // Toggle grace/balloon specific rows
+    const stdRow=document.getElementById(`${id}-grace-monthly`);
+    const postGraceRow=document.getElementById(`${id}-post-grace`);
+    const balloonMoRow=document.getElementById(`${id}-balloon-monthly`);
+    const postBalloonRow=document.getElementById(`${id}-post-balloon`);
+    const standardRow=document.querySelector(`#${id}Results .tr-standard`);
+
+    if(t.amort==='grace'){
+      if(standardRow)standardRow.classList.add('hidden');
+      if(stdRow){stdRow.classList.remove('hidden');setText(`${id}GraceMonthly`,fmt(res.graceOnly));}
+      if(postGraceRow){postGraceRow.classList.remove('hidden');setText(`${id}PostGrace`,fmt(res.postGrace));}
+      if(balloonMoRow)balloonMoRow.classList.add('hidden');
+      if(postBalloonRow)postBalloonRow.classList.add('hidden');
+    }else if(t.amort==='balloon'){
+      if(standardRow)standardRow.classList.add('hidden');
+      if(stdRow)stdRow.classList.add('hidden');
+      if(postGraceRow)postGraceRow.classList.add('hidden');
+      if(balloonMoRow){balloonMoRow.classList.remove('hidden');setText(`${id}BalloonMonthly`,fmt(res.initial));}
+      if(postBalloonRow){postBalloonRow.classList.remove('hidden');setText(`${id}PostBalloon`,fmt(res.balloonEnd));}
+    }else{
+      if(standardRow)standardRow.classList.remove('hidden');
+      if(stdRow)stdRow.classList.add('hidden');
+      if(postGraceRow)postGraceRow.classList.add('hidden');
+      if(balloonMoRow)balloonMoRow.classList.add('hidden');
+      if(postBalloonRow)postBalloonRow.classList.add('hidden');
+    }
 
     const beRow=document.getElementById(`${id}-balloon-end`),beVal=document.getElementById(`${id}BalloonEnd`);
     if(t.amort==='balloon'){if(beVal)beVal.textContent=fmt(res.balloonEnd);if(beRow)beRow.classList.remove('hidden');}

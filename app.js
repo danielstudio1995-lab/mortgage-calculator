@@ -264,13 +264,6 @@ function syncTotalMortgageField(){
 function onAmtChange(id,amt){
   const t=STATE.tracks[id];if(!t)return;
   t.amt=amt;t.pct=STATE.totalMortgage>0?Math.round(amt/STATE.totalMortgage*100):0;
-  const sld=document.getElementById(`${id}PctSlider`);if(sld){sld.value=t.pct;setSliderFill(sld);}
-  recalcAllTracks();
-}
-function onSliderChange(id,pct){
-  const t=STATE.tracks[id];if(!t)return;
-  t.pct=pct;t.amt=Math.round(STATE.totalMortgage*(pct/100));
-  const el=document.getElementById(`${id}AmtNum`);if(el)el.value=t.amt>0?t.amt.toLocaleString('he-IL'):'0';
   recalcAllTracks();
 }
 
@@ -491,8 +484,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(cb)cb.addEventListener('change',()=>{t.enabled=cb.checked;card.classList.toggle('enabled',t.enabled);recalcAllTracks();});
     const amtEl=card.querySelector('.amt-input');
     if(amtEl){amtEl.addEventListener('input',()=>{liveFormat(amtEl);onAmtChange(id,parseNum(amtEl.value));});amtEl.addEventListener('blur',()=>formatInput(amtEl));}
-    const pctSld=card.querySelector('.track-pct-slider');
-    if(pctSld){pctSld.addEventListener('input',()=>onSliderChange(id,parseInt(pctSld.value)));setSliderFill(pctSld);}
+    // סרגל אחוז הוסר — קלט ידני בלבד
     const rateSld=card.querySelector('.rate-slider');
     if(rateSld&&id!=='zakaut'){rateSld.addEventListener('input',()=>{t.rate=parseInt(rateSld.value)/100;setText(`${id}Rate`,t.rate.toFixed(2)+'%');setSliderFill(rateSld);recalcAllTracks();});setSliderFill(rateSld);}
     if(id==='zakaut'){const upd=y=>{t.rate=getZakautRate(y);t.years=y;setText('zakautRateDisplay',t.rate.toFixed(2)+'%');recalcAllTracks();};upd(t.years);}

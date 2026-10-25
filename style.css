@@ -245,7 +245,7 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 /* SLIDER ROWS */
 .slider-row{display:grid;grid-template-columns:90px 58px 1fr;align-items:center;gap:var(--sp-sm)}
 .slider-row label{font-size:.78rem;color:var(--text-secondary);font-weight:600;white-space:nowrap}
-.slider-val{font-family:var(--font-ui);font-size:.85rem;font-weight:700;color:var(--green-dark);text-align:center;white-space:nowrap}
+.slider-val{font-family:var(--font-ui);font-size:.85rem;font-weight:700;color:var(--green-dark);text-align:right;white-space:nowrap}
 
 /* YEARS IN TRACK */
 .track-years-row,.amort-row{display:flex;align-items:center;gap:var(--sp-xs);flex-wrap:wrap}
@@ -360,7 +360,7 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
   .slider-row{display:flex;flex-direction:column;gap:4px}
   .slider-row label{width:100%;display:block;text-align:right}
   .slider-row input[type=range]{width:100%}
-  .slider-row .slider-val{text-align:right}
+  .slider-row .slider-val{text-align:right;width:100%}
   .result-dark-card{padding:var(--sp-lg) var(--sp-md)}
   .result-dark-top{gap:var(--sp-md);flex-wrap:wrap}
   .result-dark-grid{grid-template-columns:1fr 1fr}
@@ -407,7 +407,7 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
   .slider-row{display:flex;flex-direction:column;gap:4px}
   .slider-row label{font-size:.75rem;font-weight:600;color:var(--text-secondary);text-align:right;width:100%;display:block}
   .slider-row input[type=range]{width:100%}
-  .slider-row .slider-val{text-align:right}
+  .slider-row .slider-val{text-align:right;width:100%}
   .slider-val{font-size:.78rem}
   .result-dark-card{padding:var(--sp-md) var(--sp-sm);border-radius:var(--r-lg)}
   .result-dark-grid{grid-template-columns:1fr 1fr;gap:var(--sp-sm)}

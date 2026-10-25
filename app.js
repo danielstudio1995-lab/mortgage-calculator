@@ -58,6 +58,16 @@ function kerenTotal(P,r,y){
 function balloonMonthly(P,r){return P*(r/100/12);}
 function balloonTotal(P,r,y){return balloonMonthly(P,r)*Math.round(y*12)+P;}
 
+/* בלון חלקי: ריבית בלבד ל-balloonMo חודשים, אחר כך שפיצר לשארית */
+function balloonPayments(P,r,y,balloonMo){
+  const totalMo=Math.round(y*12);
+  const gracePmt=P*(r/100/12); // ריבית בלבד
+  const remainMo=Math.max(totalMo-balloonMo,1);
+  const postPmt=spitzer(P,r,remainMo/12);
+  const total=gracePmt*balloonMo+postPmt*remainMo;
+  return{balloon:gracePmt,post:postPmt,total:total};
+}
+
 function gracePayments(P,r,y,graceMo){
   const gracePmt=P*(r/100/12);
   const remainMo=Math.max(Math.round(y*12)-graceMo,1);
@@ -91,7 +101,7 @@ function cpiKeren(P,nomRate,years,annualCPI){
 function computeTrack(id,t,totalM,cpi){
   const P=t.amt>0?t.amt:totalM*(t.pct/100);
   if(P<=0||!t.enabled)return null;
-  const rate=t.rate||5,years=t.years||30,graceMo=t.graceMo||12;
+  const rate=t.rate||5,years=t.years||30,graceMo=t.graceMo||12,balloonMo=t.balloonMo||12;
   let initial=0,peak=0,total=0,balloonEnd=0,per1=0,graceOnly=0,postGrace=0;
 
   if(t.amort==='keren'){
@@ -105,10 +115,10 @@ function computeTrack(id,t,totalM,cpi){
       per1=P>0?total/P:0;
     }
   }else if(t.amort==='balloon'){
-    initial=balloonMonthly(P,rate);
-    // בלון: שיא = ריבית בלבד (אין +2% כי לא צמוד)
-    peak=initial;
-    total=balloonTotal(P,rate,years);
+    const b=balloonPayments(P,rate,years,balloonMo);
+    initial=b.balloon;  // ריבית בלבד בתקופת הבלון
+    peak=b.post;        // שפיצר אחרי תקופת הבלון
+    total=b.total;
     balloonEnd=P;
     per1=P>0?total/P:0;
   }else if(t.amort==='grace'){
@@ -139,7 +149,7 @@ function computeTrack(id,t,totalM,cpi){
       per1=P>0?total/P:0;
     }
   }
-  return{P,initial,peak,total,interest:total-P,balloonEnd,per1,graceOnly,postGrace};
+  return{P,initial,peak,total,interest:total-P,balloonEnd,per1,graceOnly,postGrace,postBalloon:peak};
 }
 
 /* ── מצב ── */
@@ -304,7 +314,7 @@ function recalcAllTracks(){
       if(stdRow)stdRow.classList.add('hidden');
       if(postGraceRow)postGraceRow.classList.add('hidden');
       if(balloonMoRow){balloonMoRow.classList.remove('hidden');setText(`${id}BalloonMonthly`,fmt(res.initial));}
-      if(postBalloonRow){postBalloonRow.classList.remove('hidden');setText(`${id}PostBalloon`,fmt(res.balloonEnd));}
+      if(postBalloonRow){postBalloonRow.classList.remove('hidden');setText(`${id}PostBalloon`,fmt(res.peak));}
     }else{
       if(standardRow)standardRow.classList.remove('hidden');
       if(stdRow)stdRow.classList.add('hidden');
@@ -492,24 +502,14 @@ document.addEventListener('DOMContentLoaded',()=>{
       card.querySelectorAll('.track-years-row .yr').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
       const yrs=parseInt(btn.dataset.val);t.years=yrs;
       const yrM=card.querySelector('.yr-manual');if(yrM)yrM.value=yrs;
-      const moM=card.querySelector('.mo-manual');if(moM)moM.value=yrs*12;
       if(id==='zakaut'){t.rate=getZakautRate(yrs);setText('zakautRateDisplay',t.rate.toFixed(2)+'%');}
       recalcAllTracks();
     }));
     const yrM=card.querySelector('.yr-manual');
     if(yrM)yrM.addEventListener('input',()=>{
       const v=Math.min(30,Math.max(1,parseInt(yrM.value)||30));t.years=v;
-      const moM=card.querySelector('.mo-manual');if(moM)moM.value=Math.round(v*12);
       card.querySelectorAll('.track-years-row .yr').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.val)===v));
       if(id==='zakaut'){t.rate=getZakautRate(v);setText('zakautRateDisplay',t.rate.toFixed(2)+'%');}
-      recalcAllTracks();
-    });
-    const moM=card.querySelector('.mo-manual');
-    if(moM)moM.addEventListener('input',()=>{
-      const mo=Math.min(360,Math.max(1,parseInt(moM.value)||360));t.years=mo/12;
-      const yrEl=card.querySelector('.yr-manual');if(yrEl)yrEl.value=Math.round(t.years);
-      card.querySelectorAll('.track-years-row .yr').forEach(b=>b.classList.toggle('active',parseInt(b.dataset.val)===Math.round(t.years)));
-      if(id==='zakaut'){t.rate=getZakautRate(Math.round(t.years));setText('zakautRateDisplay',t.rate.toFixed(2)+'%');}
       recalcAllTracks();
     });
     card.querySelectorAll('.amort-row .am').forEach(btn=>btn.addEventListener('click',()=>{
@@ -537,3 +537,53 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function openModal(t,b){setText('modalTitle',t);setText('modalBody',b);document.getElementById('modalOverlay')?.classList.add('open');}
 function closeModal(){document.getElementById('modalOverlay')?.classList.remove('open');}
+
+/* ── PDF / Print ── */
+const TRACK_NAMES_PDF={kalatz:'קל"צ קבועה',katz:'ק"צ קבועה',zakaut:'זכאות',prime:'פריים',makam:'מק"מ',mcz:'מ"צ',mlcz:'מל"צ'};
+
+document.getElementById('pdfDownloadBtn')?.addEventListener('click',()=>{
+  buildPrintSection();
+  setTimeout(()=>window.print(),120);
+});
+
+function buildPrintSection(){
+  const dateEl=document.getElementById('printDate');
+  if(dateEl)dateEl.textContent=new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'});
+
+  const body=document.getElementById('printBody');
+  if(!body)return;
+  body.innerHTML='';
+
+  // Summary boxes
+  const monthly=document.getElementById('totalMonthlyInitial')?.textContent||'—';
+  const peak=document.getElementById('totalPeak')?.textContent||'—';
+  const total=document.getElementById('grandTotal')?.textContent||'—';
+  const mortgage=STATE.totalMortgage>0?fmt(STATE.totalMortgage):'—';
+
+  const summaryHtml=`<div class="print-summary-row">
+    <div class="print-summary-box"><span>סכום משכנתא</span><strong>${mortgage}</strong></div>
+    <div class="print-summary-box"><span>החזר חודשי התחלתי</span><strong>${monthly}</strong></div>
+    <div class="print-summary-box"><span>החזר חודשי בשיא</span><strong>${peak}</strong></div>
+    <div class="print-summary-box"><span>סך החזר כולל</span><strong>${total}</strong></div>
+  </div>`;
+  body.insertAdjacentHTML('beforeend',summaryHtml);
+
+  // Per-track details
+  const ids=['kalatz','katz','zakaut','prime','makam','mcz','mlcz'];
+  ids.forEach(id=>{
+    const t=STATE.tracks[id];
+    if(!t||!t.enabled||!t.amt>0&&!(t.pct>0))return;
+    const res=computeTrack(id,t,STATE.totalMortgage,STATE.cpi);
+    if(!res)return;
+    const amortLabel={spitzer:'שפיצר',keren:'קרן שווה',balloon:'בלון',grace:'גרייס'}[t.amort]||t.amort;
+    const trackHtml=`<div class="print-track">
+      <div class="print-track-name">${TRACK_NAMES_PDF[id]||id} — ${fmt(res.P)} ₪ · ${t.years} שנים · ${t.rate.toFixed(2)}% · ${amortLabel}</div>
+      <div class="print-track-grid">
+        <div class="print-track-item"><span>החזר התחלתי</span><strong>${fmt(res.initial)} ₪</strong></div>
+        <div class="print-track-item"><span>החזר שיא</span><strong>${fmt(res.peak)} ₪</strong></div>
+        <div class="print-track-item"><span>סך הכל</span><strong>${fmt(res.total)} ₪</strong></div>
+      </div>
+    </div>`;
+    body.insertAdjacentHTML('beforeend',trackHtml);
+  });
+}

@@ -392,3 +392,34 @@ input[type="number"].num-input::-webkit-inner-spin-button{-webkit-appearance:non
 .track-results{display:flex;gap:var(--sp-sm);flex-wrap:wrap;margin-top:var(--sp-xs);width:100%;overflow:hidden;}
 .tr-result{flex:1;min-width:120px;max-width:100%;display:flex;flex-direction:column;gap:2px;background:var(--bg);border-radius:var(--r-sm);padding:var(--sp-sm) var(--sp-md);overflow:hidden;}
 .tr-result strong{font-family:var(--font-ui);font-size:.9rem;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── הכנסה ידנית hint ── */
+.yr-manual-hint{font-size:.65rem;color:var(--text-secondary);white-space:nowrap;margin-right:4px;}
+
+/* ── PDF Download button ── */
+.pdf-download-wrap{display:flex;justify-content:center;margin:var(--sp-xl) 0 var(--sp-md);}
+.pdf-btn{display:inline-flex;align-items:center;gap:8px;background:var(--green-dark);color:#fff;border:none;border-radius:var(--r-md);padding:12px 28px;font-family:var(--font-ui);font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s,transform .1s;}
+.pdf-btn:hover{background:var(--green-primary);transform:translateY(-1px);}
+.pdf-btn:active{transform:translateY(0);}
+
+/* ── Print-only section (hidden on screen) ── */
+.print-only{display:none;}
+
+@media print {
+  body > *{display:none!important;}
+  .print-only{display:block!important;font-family:'Noto Sans Hebrew',Arial,sans-serif;direction:rtl;text-align:right;color:#111;padding:20px;}
+  .print-header{display:flex;align-items:center;gap:20px;border-bottom:2px solid #006015;padding-bottom:14px;margin-bottom:20px;}
+  .print-meta{flex:1;}
+  .print-title{font-size:1.2rem;font-weight:700;color:#006015;margin:4px 0 0;}
+  .print-date{font-size:.8rem;color:#666;margin:0;}
+  .print-summary-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+  .print-summary-box{flex:1;min-width:140px;border:1px solid #ddd;border-radius:6px;padding:10px 14px;}
+  .print-summary-box span{font-size:.75rem;color:#666;display:block;}
+  .print-summary-box strong{font-size:1.1rem;font-weight:700;color:#006015;}
+  .print-track{border:1px solid #e0e0e0;border-radius:6px;padding:10px 14px;margin-bottom:12px;page-break-inside:avoid;}
+  .print-track-name{font-size:.9rem;font-weight:700;color:#006015;margin-bottom:6px;}
+  .print-track-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .print-track-item span{font-size:.68rem;color:#888;display:block;}
+  .print-track-item strong{font-size:.9rem;font-weight:600;color:#111;}
+  .print-footer{margin-top:24px;border-top:1px solid #ddd;padding-top:10px;font-size:.7rem;color:#888;}
+}
